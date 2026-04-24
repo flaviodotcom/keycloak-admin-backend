@@ -8,8 +8,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class KeycloakRepresentationMapperTest {
 
@@ -26,13 +25,17 @@ class KeycloakRepresentationMapperTest {
         userRepresentation.setEnabled(true);
         userRepresentation.setEmailVerified(false);
         userRepresentation.setCreatedTimestamp(99L);
-        userRepresentation.setAttributes(Map.of("department", List.of("IT")));
+        userRepresentation.setAttributes(Map.of(
+                "department", List.of("IT"),
+                "__search_department", List.of("it")
+        ));
 
         var identityUser = this.mapper.toIdentityUser(userRepresentation);
 
         assertEquals("user-1", identityUser.id());
         assertEquals("john", identityUser.username());
         assertEquals("IT", identityUser.attributes().get("department").getFirst());
+        assertNull(identityUser.attributes().get("__search_department"));
     }
 
     @Test

@@ -10,6 +10,7 @@ import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatche
 import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLocation;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     private final KeycloakUserCandidateFinder candidateFinder;
     private final KeycloakRepresentationMapper mapper;
     private final KeycloakUserMatcher matcher;
+    private final KeycloakUserAttributeIndex attributeIndex;
 
     @Override
     public List<IdentityUser> findUsers(UserSearchCriteria criteria) {
@@ -40,7 +42,9 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     @Override
     public IdentityUser createUser(CreateIdentityUserCommand command) {
         try {
-            var userRepresentation = this.mapper.toUserRepresentation(command);
+            var userRepresentation = this.mapper.toUserRepresentation(
+                    command.withAttributes(this.attributeIndex.index(command.attributes()))
+            );
 
             try (var response = this.keycloak.users().create(userRepresentation)) {
                 KeycloakHttpResponseHandler.ensureCreated(response);

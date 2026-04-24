@@ -27,6 +27,20 @@ public final class TextFilterMatcher {
                 : normalizedValue.contains(normalizedFilter);
     }
 
+    public static boolean matchesSensitive(String filter, String value, boolean exact) {
+        if (filter == null) {
+            return true;
+        }
+
+        if (value == null) {
+            return false;
+        }
+
+        return exact
+                ? value.equals(filter)
+                : value.contains(filter);
+    }
+
     public static String normalize(String value) {
         var decomposedValue = Normalizer.normalize(value, Normalizer.Form.NFD);
         return DIACRITICS_PATTERN.matcher(decomposedValue)

@@ -2,8 +2,8 @@ package io.github.flaviodotcom.infrastructure.keycloak.candidate;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.shared.SearchTermBuilder;
-import io.github.flaviodotcom.domain.shared.TextFilterMatcher;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -22,10 +22,14 @@ import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQue
 public class KeycloakUserCandidateFinder {
 
     private final KeycloakAdminSupport keycloak;
+    private final KeycloakUserAttributeIndex attributeIndex;
 
     public List<UserRepresentation> findCandidates(UserSearchCriteria criteria) {
         if (criteria.hasAttributeFilters()) {
-            return this.keycloak.users().searchByAttributes(this.toAttributeQuery(criteria.attributes()), criteria.exact());
+            return this.keycloak.users().searchByAttributes(
+                    this.toAttributeQuery(this.attributeIndex.toSearchAttributes(criteria.attributes())),
+                    criteria.exact()
+            );
         }
 
         if (criteria.hasSearchTerm()) {
@@ -71,7 +75,7 @@ public class KeycloakUserCandidateFinder {
 
     private String toAttributeQuery(Map<String, String> attributes) {
         return attributes.entrySet().stream()
-                .map(attribute -> "%s:%s".formatted(attribute.getKey(), TextFilterMatcher.normalize(attribute.getValue())))
+                .map(attribute -> "%s:%s".formatted(attribute.getKey(), attribute.getValue()))
                 .collect(Collectors.joining(" "));
     }
 

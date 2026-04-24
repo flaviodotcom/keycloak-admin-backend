@@ -18,4 +18,16 @@ public record CreateIdentityUserCommand(
         emailVerified = emailVerified == null ? Boolean.FALSE : emailVerified;
         attributes = attributes == null ? Map.of() : attributes;
     }
+
+    public CreateIdentityUserCommand withAttributes(Map<String, List<String>> attributes) {
+        return new CreateIdentityUserCommand(
+                this.username,
+                this.email,
+                this.firstName,
+                this.lastName,
+                this.enabled,
+                this.emailVerified,
+                attributes
+        );
+    }
 }

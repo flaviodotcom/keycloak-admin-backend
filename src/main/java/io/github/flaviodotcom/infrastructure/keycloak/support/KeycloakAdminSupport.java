@@ -7,7 +7,10 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.admin.client.resource.UserProfileResource;
 import org.keycloak.admin.client.resource.UsersResource;
+
+import jakarta.ws.rs.core.UriBuilder;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -30,5 +33,16 @@ public class KeycloakAdminSupport {
 
     public RolesResource roles() {
         return this.realm().roles();
+    }
+
+    public UserProfileResource userProfile() {
+        var userProfileUri = UriBuilder.fromUri(this.config.serverUrl())
+                .path("admin")
+                .path("realms")
+                .path(this.config.realm())
+                .path("users")
+                .path("profile")
+                .build();
+        return this.keycloak.proxy(UserProfileResource.class, userProfileUri);
     }
 }
