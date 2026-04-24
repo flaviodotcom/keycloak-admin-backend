@@ -30,7 +30,7 @@ public class KeycloakRepresentationMapper {
                 representation.isEnabled(),
                 representation.isEmailVerified(),
                 representation.getCreatedTimestamp(),
-                this.copyAttributes(representation.getAttributes())
+                this.copyAttributes(representation.getAttributes(), false)
         );
     }
 
@@ -39,7 +39,7 @@ public class KeycloakRepresentationMapper {
                 representation.getId(),
                 representation.getName(),
                 representation.getPath(),
-                this.copyAttributes(representation.getAttributes())
+                this.copyAttributes(representation.getAttributes(), false)
         );
     }
 
@@ -62,14 +62,14 @@ public class KeycloakRepresentationMapper {
         representation.setLastName(command.lastName());
         representation.setEnabled(command.enabled());
         representation.setEmailVerified(command.emailVerified());
-        representation.setAttributes(this.copyAttributes(command.attributes()));
+        representation.setAttributes(this.copyAttributes(command.attributes(), true));
         return representation;
     }
 
     public GroupRepresentation toGroupRepresentation(CreateIdentityGroupCommand command) {
         var representation = new GroupRepresentation();
         representation.setName(command.name());
-        representation.setAttributes(this.copyAttributes(command.attributes()));
+        representation.setAttributes(this.copyAttributes(command.attributes(), false));
         return representation;
     }
 
@@ -80,7 +80,7 @@ public class KeycloakRepresentationMapper {
         return representation;
     }
 
-    private Map<String, List<String>> copyAttributes(Map<String, List<String>> attributes) {
+    private Map<String, List<String>> copyAttributes(Map<String, List<String>> attributes, boolean writable) {
         if (attributes == null || attributes.isEmpty()) {
             return Map.of();
         }
@@ -88,7 +88,7 @@ public class KeycloakRepresentationMapper {
         var copiedAttributes = new LinkedHashMap<String, List<String>>();
         for (var attribute : attributes.entrySet()) {
             var key = Objects.requireNonNull(attribute.getKey(), "Attribute key is required.");
-            if (SearchableAttributeName.isInternalName(key)) continue;
+            if (!writable && SearchableAttributeName.isInternalName(key)) continue;
             var values = List.copyOf(Objects.requireNonNull(attribute.getValue(), "Attribute values are required."));
             copiedAttributes.put(key, values);
         }

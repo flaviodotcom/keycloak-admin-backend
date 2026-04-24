@@ -59,6 +59,27 @@ class KeycloakRepresentationMapperTest {
     }
 
     @Test
+    void givenIndexedCreateUserCommand_WhenToUserRepresentation_ThenKeepInternalSearchAttribute() {
+        var command = new CreateIdentityUserCommand(
+                "pedro",
+                "pedro@example.com",
+                "Pedro",
+                "Teste",
+                true,
+                false,
+                Map.of(
+                        "name", List.of("Pedro Paulo Timbo Teste"),
+                        "__search_name", List.of("pedro paulo timbo teste")
+                )
+        );
+
+        var userRepresentation = this.mapper.toUserRepresentation(command);
+
+        assertEquals("Pedro Paulo Timbo Teste", userRepresentation.getAttributes().get("name").getFirst());
+        assertEquals("pedro paulo timbo teste", userRepresentation.getAttributes().get("__search_name").getFirst());
+    }
+
+    @Test
     void givenGroupRepresentation_WhenToIdentityGroup_ThenMapPathAndAttributes() {
         var groupRepresentation = new GroupRepresentation();
         groupRepresentation.setId("group-1");
