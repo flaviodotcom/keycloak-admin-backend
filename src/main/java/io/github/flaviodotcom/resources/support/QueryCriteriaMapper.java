@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,7 +127,7 @@ public class QueryCriteriaMapper {
         return this.readSingleValue(name, values);
     }
 
-    private String readSingleValue(String name, java.util.List<String> values) {
+    private String readSingleValue(String name, List<String> values) {
         if (values.size() != 1) {
             throw new BadRequestException("Query param '%s' must be informed only once.".formatted(name));
         }

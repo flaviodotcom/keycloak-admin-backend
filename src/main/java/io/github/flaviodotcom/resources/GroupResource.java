@@ -18,9 +18,6 @@ import lombok.AllArgsConstructor;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/v1/groups")
-@ApplicationScoped
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
 @AllArgsConstructor
 public class GroupResource {
 

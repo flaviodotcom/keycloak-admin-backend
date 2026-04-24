@@ -1,11 +1,12 @@
 package io.github.flaviodotcom.domain.identity;
 
+import java.util.List;
 import java.util.Map;
 
 public record CreateIdentityGroupCommand(
         String name,
         String parentGroupId,
-        Map<String, java.util.List<String>> attributes
+        Map<String, List<String>> attributes
 ) {
 
     public CreateIdentityGroupCommand {

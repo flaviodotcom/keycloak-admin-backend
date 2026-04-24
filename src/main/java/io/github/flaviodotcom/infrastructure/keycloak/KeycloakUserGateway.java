@@ -7,6 +7,7 @@ import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
+import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
 import java.util.Locale;
@@ -50,7 +51,7 @@ public class KeycloakUserGateway implements IdentityUserGateway {
         }
     }
 
-    private List<org.keycloak.representations.idm.UserRepresentation> searchUsers(UserSearchCriteria criteria) {
+    private List<UserRepresentation> searchUsers(UserSearchCriteria criteria) {
         if (criteria.hasAttributeFilters()) {
             return this.keycloak.users().searchByAttributes(this.toAttributeQuery(criteria.attributes()), criteria.exact());
         }
