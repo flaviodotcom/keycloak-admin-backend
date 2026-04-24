@@ -58,16 +58,18 @@ public class KeycloakGroupGateway implements IdentityGroupGateway {
 
     private List<GroupRepresentation> findAllGroups() {
         var rootGroups = this.keycloak.groups().groups(null, FIRST_RESULT, MAX_RESULTS, false);
-        return this.flatten(rootGroups);
+        return this.findNestedGroups(rootGroups);
     }
 
-    private List<GroupRepresentation> flatten(List<GroupRepresentation> groups) {
-        var flattened = new ArrayList<GroupRepresentation>();
+    private List<GroupRepresentation> findNestedGroups(List<GroupRepresentation> groups) {
+        var nestedGroups = new ArrayList<GroupRepresentation>();
         for (var group : groups) {
-            flattened.add(group);
-            flattened.addAll(this.flatten(group.getSubGroups() == null ? List.of() : group.getSubGroups()));
+            var groupResource = this.keycloak.groups().group(group.getId());
+            nestedGroups.add(groupResource.toRepresentation());
+            var subGroups = groupResource.getSubGroups(FIRST_RESULT, MAX_RESULTS, false);
+            nestedGroups.addAll(this.findNestedGroups(subGroups));
         }
-        return flattened;
+        return nestedGroups;
     }
 
     private boolean matches(IdentityGroup group, GroupSearchCriteria criteria) {
