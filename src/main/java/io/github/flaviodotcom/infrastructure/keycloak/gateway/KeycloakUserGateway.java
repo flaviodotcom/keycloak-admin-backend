@@ -70,9 +70,9 @@ public class KeycloakUserGateway implements IdentityUserGateway {
                     criteria.firstName(),
                     criteria.lastName(),
                     criteria.email(),
-                    criteria.enabled(),
                     FIRST_RESULT,
                     MAX_RESULTS,
+                    criteria.enabled(),
                     false,
                     criteria.exact()
             );
