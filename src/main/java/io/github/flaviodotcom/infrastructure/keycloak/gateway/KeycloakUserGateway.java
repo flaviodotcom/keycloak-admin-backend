@@ -14,8 +14,10 @@ import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
@@ -61,7 +63,7 @@ public class KeycloakUserGateway implements IdentityUserGateway {
         }
 
         if (criteria.hasSearchTerm()) {
-            return this.keycloak.users().search(criteria.search(), criteria.exact(), FIRST_RESULT, MAX_RESULTS);
+            return this.searchUsersBySupportedFields(criteria.search(), criteria.exact());
         }
 
         if (criteria.hasStructuredFilters()) {
@@ -79,6 +81,21 @@ public class KeycloakUserGateway implements IdentityUserGateway {
         }
 
         return this.keycloak.users().list(FIRST_RESULT, MAX_RESULTS);
+    }
+
+    private List<UserRepresentation> searchUsersBySupportedFields(String search, boolean exact) {
+        var usersById = new LinkedHashMap<String, UserRepresentation>();
+        this.addUsersById(usersById, this.keycloak.users().searchByUsername(search, exact));
+        this.addUsersById(usersById, this.keycloak.users().searchByEmail(search, exact));
+        this.addUsersById(usersById, this.keycloak.users().searchByFirstName(search, exact));
+        this.addUsersById(usersById, this.keycloak.users().searchByLastName(search, exact));
+        return List.copyOf(usersById.values());
+    }
+
+    private void addUsersById(Map<String, UserRepresentation> usersById, List<UserRepresentation> users) {
+        for (var user : users) {
+            usersById.putIfAbsent(Objects.requireNonNull(user.getId(), "Keycloak user id is required."), user);
+        }
     }
 
     private String toAttributeQuery(Map<String, String> attributes) {
