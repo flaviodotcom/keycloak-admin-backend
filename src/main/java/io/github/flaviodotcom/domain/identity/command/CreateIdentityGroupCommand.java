@@ -1,16 +1,15 @@
-package io.github.flaviodotcom.domain.identity;
+package io.github.flaviodotcom.domain.identity.command;
 
 import java.util.List;
 import java.util.Map;
 
-public record IdentityGroup(
-        String id,
+public record CreateIdentityGroupCommand(
         String name,
-        String path,
+        String parentGroupId,
         Map<String, List<String>> attributes
 ) {
 
-    public IdentityGroup {
+    public CreateIdentityGroupCommand {
         attributes = attributes == null ? Map.of() : attributes;
     }
 }

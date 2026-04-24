@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.domain.identity.IdentityUser;
-import io.github.flaviodotcom.domain.identity.IdentityUserGateway;
-import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;

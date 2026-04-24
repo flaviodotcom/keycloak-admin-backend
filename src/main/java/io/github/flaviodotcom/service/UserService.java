@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.service;
 
-import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.dto.CreateUserRequest;
 import io.github.flaviodotcom.dto.UserResponse;
 

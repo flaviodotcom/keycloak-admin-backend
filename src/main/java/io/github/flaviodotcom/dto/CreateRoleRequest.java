@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.dto;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityRoleCommand;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateRoleRequest(

@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.domain.identity.IdentityRole;
-import io.github.flaviodotcom.domain.identity.IdentityRoleGateway;
-import io.github.flaviodotcom.domain.identity.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.model.IdentityRole;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
+import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;

@@ -1,11 +1,11 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityGroupCommand;
-import io.github.flaviodotcom.domain.identity.CreateIdentityRoleCommand;
-import io.github.flaviodotcom.domain.identity.CreateIdentityUserCommand;
-import io.github.flaviodotcom.domain.identity.IdentityGroup;
-import io.github.flaviodotcom.domain.identity.IdentityRole;
-import io.github.flaviodotcom.domain.identity.IdentityUser;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
+import io.github.flaviodotcom.domain.identity.model.IdentityRole;
+import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;

@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.dto;
 
-import io.github.flaviodotcom.domain.identity.IdentityUser;
+import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 
 import java.util.List;
 import java.util.Map;

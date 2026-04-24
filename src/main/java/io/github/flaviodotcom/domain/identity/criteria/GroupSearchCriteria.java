@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.domain.identity;
+package io.github.flaviodotcom.domain.identity.criteria;
 
 import java.util.Map;
 

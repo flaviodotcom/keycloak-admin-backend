@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.dto;
 
-import io.github.flaviodotcom.domain.identity.IdentityRole;
+import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 
 public record RoleResponse(
         String id,

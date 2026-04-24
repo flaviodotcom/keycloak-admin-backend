@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.service;
 
-import io.github.flaviodotcom.domain.identity.GroupSearchCriteria;
+import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.dto.CreateGroupRequest;
 import io.github.flaviodotcom.dto.GroupResponse;
 

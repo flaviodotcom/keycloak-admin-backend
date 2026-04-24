@@ -1,7 +1,7 @@
 package io.github.flaviodotcom.service.impl;
 
-import io.github.flaviodotcom.domain.identity.IdentityRoleGateway;
-import io.github.flaviodotcom.domain.identity.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
+import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.dto.CreateRoleRequest;
 import io.github.flaviodotcom.dto.RoleResponse;
 import io.github.flaviodotcom.service.RoleService;

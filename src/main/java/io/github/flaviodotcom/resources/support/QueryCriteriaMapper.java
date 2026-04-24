@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources.support;
 
-import io.github.flaviodotcom.domain.identity.GroupSearchCriteria;
-import io.github.flaviodotcom.domain.identity.RoleSearchCriteria;
-import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
+import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.MultivaluedMap;

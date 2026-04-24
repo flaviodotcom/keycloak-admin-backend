@@ -1,6 +1,6 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;

@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.domain.identity;
+package io.github.flaviodotcom.domain.identity.criteria;
 
 public record RoleSearchCriteria(
         String name,

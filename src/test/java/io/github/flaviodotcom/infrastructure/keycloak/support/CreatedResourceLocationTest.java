@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.support;
 
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;

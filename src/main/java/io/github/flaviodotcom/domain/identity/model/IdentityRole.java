@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.domain.identity;
+package io.github.flaviodotcom.domain.identity.model;
 
 public record IdentityRole(
         String id,

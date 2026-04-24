@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.domain.identity.GroupSearchCriteria;
-import io.github.flaviodotcom.domain.identity.IdentityGroup;
-import io.github.flaviodotcom.domain.identity.IdentityGroupGateway;
+import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
+import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;

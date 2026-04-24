@@ -1,22 +1,25 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityRoleCommand;
-import io.github.flaviodotcom.domain.identity.IdentityRole;
-import io.github.flaviodotcom.domain.identity.IdentityRoleGateway;
-import io.github.flaviodotcom.domain.identity.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
+import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityRole;
+import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakFilterMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
-import java.util.Locale;
+
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.MAX_RESULTS;
 
 @ApplicationScoped
 @AllArgsConstructor
 public class KeycloakRoleGateway implements IdentityRoleGateway {
-
-    private static final int FIRST_RESULT = 0;
-    private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
     private final KeycloakAdminSupport keycloak;
     private final KeycloakRepresentationMapper mapper;
@@ -48,18 +51,6 @@ public class KeycloakRoleGateway implements IdentityRoleGateway {
     }
 
     private boolean matches(IdentityRole role, RoleSearchCriteria criteria) {
-        if (criteria.name() == null) {
-            return true;
-        }
-
-        if (role.name() == null) {
-            return false;
-        }
-
-        var normalizedFilter = criteria.name().toLowerCase(Locale.ROOT);
-        var normalizedName = role.name().toLowerCase(Locale.ROOT);
-        return criteria.exact()
-                ? normalizedName.equals(normalizedFilter)
-                : normalizedName.contains(normalizedFilter);
+        return KeycloakFilterMatcher.matchesText(criteria.name(), role.name(), criteria.exact());
     }
 }

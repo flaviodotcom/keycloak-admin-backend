@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.support;
 
 import io.github.flaviodotcom.config.KeycloakAdminClientConfig;
 import jakarta.enterprise.context.ApplicationScoped;

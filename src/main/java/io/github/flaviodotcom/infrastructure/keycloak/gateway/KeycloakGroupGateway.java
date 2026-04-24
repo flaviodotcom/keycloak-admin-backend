@@ -1,9 +1,14 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityGroupCommand;
-import io.github.flaviodotcom.domain.identity.GroupSearchCriteria;
-import io.github.flaviodotcom.domain.identity.IdentityGroup;
-import io.github.flaviodotcom.domain.identity.IdentityGroupGateway;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
+import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
+import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLocation;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakFilterMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
@@ -11,15 +16,13 @@ import org.keycloak.representations.idm.GroupRepresentation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.MAX_RESULTS;
 
 @ApplicationScoped
 @AllArgsConstructor
 public class KeycloakGroupGateway implements IdentityGroupGateway {
-
-    private static final int FIRST_RESULT = 0;
-    private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
     private final KeycloakAdminSupport keycloak;
     private final KeycloakRepresentationMapper mapper;
@@ -69,8 +72,8 @@ public class KeycloakGroupGateway implements IdentityGroupGateway {
 
     private boolean matches(IdentityGroup group, GroupSearchCriteria criteria) {
         return this.matchesSearch(criteria.search(), group, criteria.exact())
-                && this.matchesText(criteria.name(), group.name(), criteria.exact())
-                && this.matchesAttributes(criteria.attributes(), group.attributes(), criteria.exact());
+                && KeycloakFilterMatcher.matchesText(criteria.name(), group.name(), criteria.exact())
+                && KeycloakFilterMatcher.matchesAttributes(criteria.attributes(), group.attributes(), criteria.exact());
     }
 
     private boolean matchesSearch(String filter, IdentityGroup group, boolean exact) {
@@ -78,43 +81,7 @@ public class KeycloakGroupGateway implements IdentityGroupGateway {
             return true;
         }
 
-        return this.matchesText(filter, group.name(), exact)
-                || this.matchesText(filter, group.path(), exact);
-    }
-
-    private boolean matchesAttributes(
-            Map<String, String> requestedAttributes,
-            Map<String, List<String>> currentAttributes,
-            boolean exact
-    ) {
-        for (var requestedAttribute : requestedAttributes.entrySet()) {
-            var values = currentAttributes.get(requestedAttribute.getKey());
-            if (values == null || values.isEmpty()) {
-                return false;
-            }
-
-            var matched = values.stream().anyMatch(value -> this.matchesText(requestedAttribute.getValue(), value, exact));
-            if (!matched) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean matchesText(String filter, String value, boolean exact) {
-        if (filter == null) {
-            return true;
-        }
-
-        if (value == null) {
-            return false;
-        }
-
-        var normalizedFilter = filter.toLowerCase(Locale.ROOT);
-        var normalizedValue = value.toLowerCase(Locale.ROOT);
-        return exact
-                ? normalizedValue.equals(normalizedFilter)
-                : normalizedValue.contains(normalizedFilter);
+        return KeycloakFilterMatcher.matchesText(filter, group.name(), exact)
+                || KeycloakFilterMatcher.matchesText(filter, group.path(), exact);
     }
 }

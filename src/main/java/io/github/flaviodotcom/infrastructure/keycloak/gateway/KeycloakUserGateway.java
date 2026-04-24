@@ -1,25 +1,29 @@
-package io.github.flaviodotcom.infrastructure.keycloak;
+package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityUserCommand;
-import io.github.flaviodotcom.domain.identity.IdentityUser;
-import io.github.flaviodotcom.domain.identity.IdentityUserGateway;
-import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLocation;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakFilterMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.MAX_RESULTS;
 
 @ApplicationScoped
 @AllArgsConstructor
 public class KeycloakUserGateway implements IdentityUserGateway {
-
-    private static final int FIRST_RESULT = 0;
-    private static final int MAX_RESULTS = Integer.MAX_VALUE;
 
     private final KeycloakAdminSupport keycloak;
     private final KeycloakRepresentationMapper mapper;
@@ -85,12 +89,12 @@ public class KeycloakUserGateway implements IdentityUserGateway {
 
     private boolean matches(IdentityUser user, UserSearchCriteria criteria) {
         return this.matchesSearch(criteria.search(), user, criteria.exact())
-                && this.matchesText(criteria.username(), user.username(), criteria.exact())
-                && this.matchesText(criteria.email(), user.email(), criteria.exact())
-                && this.matchesText(criteria.firstName(), user.firstName(), criteria.exact())
-                && this.matchesText(criteria.lastName(), user.lastName(), criteria.exact())
+                && KeycloakFilterMatcher.matchesText(criteria.username(), user.username(), criteria.exact())
+                && KeycloakFilterMatcher.matchesText(criteria.email(), user.email(), criteria.exact())
+                && KeycloakFilterMatcher.matchesText(criteria.firstName(), user.firstName(), criteria.exact())
+                && KeycloakFilterMatcher.matchesText(criteria.lastName(), user.lastName(), criteria.exact())
                 && this.matchesEnabled(criteria.enabled(), user.enabled())
-                && this.matchesAttributes(criteria.attributes(), user.attributes(), criteria.exact());
+                && KeycloakFilterMatcher.matchesAttributes(criteria.attributes(), user.attributes(), criteria.exact());
     }
 
     private boolean matchesSearch(String filter, IdentityUser user, boolean exact) {
@@ -98,49 +102,13 @@ public class KeycloakUserGateway implements IdentityUserGateway {
             return true;
         }
 
-        return this.matchesText(filter, user.username(), exact)
-                || this.matchesText(filter, user.email(), exact)
-                || this.matchesText(filter, user.firstName(), exact)
-                || this.matchesText(filter, user.lastName(), exact);
+        return KeycloakFilterMatcher.matchesText(filter, user.username(), exact)
+                || KeycloakFilterMatcher.matchesText(filter, user.email(), exact)
+                || KeycloakFilterMatcher.matchesText(filter, user.firstName(), exact)
+                || KeycloakFilterMatcher.matchesText(filter, user.lastName(), exact);
     }
 
     private boolean matchesEnabled(Boolean requestedValue, Boolean actualValue) {
         return requestedValue == null || requestedValue.equals(actualValue);
-    }
-
-    private boolean matchesAttributes(
-            Map<String, String> requestedAttributes,
-            Map<String, List<String>> currentAttributes,
-            boolean exact
-    ) {
-        for (var requestedAttribute : requestedAttributes.entrySet()) {
-            var values = currentAttributes.get(requestedAttribute.getKey());
-            if (values == null || values.isEmpty()) {
-                return false;
-            }
-
-            var matched = values.stream().anyMatch(value -> this.matchesText(requestedAttribute.getValue(), value, exact));
-            if (!matched) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean matchesText(String filter, String value, boolean exact) {
-        if (filter == null) {
-            return true;
-        }
-
-        if (value == null) {
-            return false;
-        }
-
-        var normalizedFilter = filter.toLowerCase(Locale.ROOT);
-        var normalizedValue = value.toLowerCase(Locale.ROOT);
-        return exact
-                ? normalizedValue.equals(normalizedFilter)
-                : normalizedValue.contains(normalizedFilter);
     }
 }

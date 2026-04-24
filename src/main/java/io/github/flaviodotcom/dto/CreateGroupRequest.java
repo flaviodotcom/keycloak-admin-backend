@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.dto;
 
-import io.github.flaviodotcom.domain.identity.CreateIdentityGroupCommand;
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;

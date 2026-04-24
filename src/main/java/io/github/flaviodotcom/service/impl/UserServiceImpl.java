@@ -1,7 +1,7 @@
 package io.github.flaviodotcom.service.impl;
 
-import io.github.flaviodotcom.domain.identity.IdentityUserGateway;
-import io.github.flaviodotcom.domain.identity.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.dto.CreateUserRequest;
 import io.github.flaviodotcom.dto.UserResponse;
 import io.github.flaviodotcom.service.UserService;

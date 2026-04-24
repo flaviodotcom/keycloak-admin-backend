@@ -1,21 +1,21 @@
-package io.github.flaviodotcom.domain.identity;
+package io.github.flaviodotcom.domain.identity.command;
 
 import java.util.List;
 import java.util.Map;
 
-public record IdentityUser(
-        String id,
+public record CreateIdentityUserCommand(
         String username,
         String email,
         String firstName,
         String lastName,
         Boolean enabled,
         Boolean emailVerified,
-        Long createdTimestamp,
         Map<String, List<String>> attributes
 ) {
 
-    public IdentityUser {
+    public CreateIdentityUserCommand {
+        enabled = enabled == null ? Boolean.TRUE : enabled;
+        emailVerified = emailVerified == null ? Boolean.FALSE : emailVerified;
         attributes = attributes == null ? Map.of() : attributes;
     }
 }
