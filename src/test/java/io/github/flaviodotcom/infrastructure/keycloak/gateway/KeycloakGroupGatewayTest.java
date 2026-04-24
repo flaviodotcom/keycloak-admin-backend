@@ -2,7 +2,9 @@ package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
+import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakGroupCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakGroupMatcher;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.GroupResource;
@@ -25,7 +27,7 @@ class KeycloakGroupGatewayTest {
         var parentResource = mock(GroupResource.class);
         var childResource = mock(GroupResource.class);
         var grandchildResource = mock(GroupResource.class);
-        var gateway = new KeycloakGroupGateway(keycloak, new KeycloakRepresentationMapper());
+        var gateway = this.gateway(keycloak);
 
         var parent = group("parent-id", "Parent", "/Parent");
         var child = group("child-id", "Child", "/Parent/Child");
@@ -54,5 +56,14 @@ class KeycloakGroupGatewayTest {
         group.setName(name);
         group.setPath(path);
         return group;
+    }
+
+    private KeycloakGroupGateway gateway(KeycloakAdminSupport keycloak) {
+        return new KeycloakGroupGateway(
+                keycloak,
+                new KeycloakGroupCandidateFinder(keycloak),
+                new KeycloakRepresentationMapper(),
+                new KeycloakGroupMatcher()
+        );
     }
 }

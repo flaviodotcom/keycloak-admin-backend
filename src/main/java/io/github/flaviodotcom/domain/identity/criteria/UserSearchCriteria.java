@@ -25,12 +25,4 @@ public record UserSearchCriteria(
     public boolean hasSearchTerm() {
         return this.search != null && !this.search.isBlank();
     }
-
-    public boolean hasStructuredFilters() {
-        return this.username != null
-                || this.email != null
-                || this.firstName != null
-                || this.lastName != null
-                || this.enabled != null;
-    }
 }
