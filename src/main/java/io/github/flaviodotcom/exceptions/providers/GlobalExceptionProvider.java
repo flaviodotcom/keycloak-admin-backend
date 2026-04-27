@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.exceptions.providers;
 
+import io.github.flaviodotcom.exceptions.ExceptionLogger;
 import io.github.flaviodotcom.exceptions.LocalizedMessage;
 import io.github.flaviodotcom.exceptions.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
@@ -18,6 +19,7 @@ public class GlobalExceptionProvider implements ExceptionMapper<Throwable> {
 
     @Override
     public Response toResponse(Throwable exception) {
+        ExceptionLogger.log(exception, 500);
         var locale = HttpLocaleResolver.resolve(this.headers);
         var detail = exception instanceof LocalizedMessage localizedMessage && localizedMessage.messageKey() != null
                 ? Messages.get(locale, localizedMessage.messageKey(), localizedMessage.messageArgs())

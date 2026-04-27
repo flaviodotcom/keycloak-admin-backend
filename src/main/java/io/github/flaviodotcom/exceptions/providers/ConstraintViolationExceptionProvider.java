@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.exceptions.providers;
 
+import io.github.flaviodotcom.exceptions.ExceptionLogger;
 import io.github.flaviodotcom.exceptions.Problem;
 import io.github.flaviodotcom.exceptions.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
@@ -20,6 +21,7 @@ public class ConstraintViolationExceptionProvider implements ExceptionMapper<Con
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
+        ExceptionLogger.log(exception, 400);
         var locale = HttpLocaleResolver.resolve(this.headers);
         var problem = new Problem(
                 400,

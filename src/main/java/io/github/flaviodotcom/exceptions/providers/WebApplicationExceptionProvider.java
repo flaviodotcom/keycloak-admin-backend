@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.exceptions.providers;
 
+import io.github.flaviodotcom.exceptions.ExceptionLogger;
 import io.github.flaviodotcom.exceptions.LocalizedMessage;
 import io.github.flaviodotcom.exceptions.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
@@ -22,6 +23,7 @@ public class WebApplicationExceptionProvider implements ExceptionMapper<WebAppli
         var locale = HttpLocaleResolver.resolve(this.headers);
         var response = exception.getResponse();
         var status = response == null ? 500 : response.getStatus();
+        ExceptionLogger.log(exception, status);
         var title = response == null || response.getStatusInfo() == null
                 ? Messages.get(locale, "problem.http.title")
                 : Messages.get(locale, "http.status.%s.title".formatted(status));

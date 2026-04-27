@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.exceptions.providers;
 
 import io.github.flaviodotcom.exceptions.BusinessException;
+import io.github.flaviodotcom.exceptions.ExceptionLogger;
 import io.github.flaviodotcom.exceptions.LocalizedMessage;
 import io.github.flaviodotcom.exceptions.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
@@ -19,6 +20,7 @@ public class BusinessExceptionProvider implements ExceptionMapper<BusinessExcept
 
     @Override
     public Response toResponse(BusinessException exception) {
+        ExceptionLogger.log(exception, 422);
         var locale = HttpLocaleResolver.resolve(this.headers);
         var detail = this.localizedMessage(exception, locale);
         return ProblemBuilder.build(422, Messages.get(locale, "problem.business.title"), detail);
