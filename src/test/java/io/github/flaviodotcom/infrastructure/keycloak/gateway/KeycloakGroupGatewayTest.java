@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityGroupCommand;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakGroupCandidateFinder;
@@ -15,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class KeycloakGroupGatewayTest {
@@ -48,6 +51,61 @@ class KeycloakGroupGatewayTest {
         var groups = gateway.findGroups(new GroupSearchCriteria(null, null, false, Map.of()));
 
         assertEquals(List.of("Parent", "Child", "Grandchild"), groups.stream().map(IdentityGroup::name).toList());
+    }
+
+    @Test
+    void givenId_WhenFindGroupById_ThenReturnGroup() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var groupsResource = mock(GroupsResource.class);
+        var groupResource = mock(GroupResource.class);
+        var gateway = this.gateway(keycloak);
+
+        when(keycloak.groups()).thenReturn(groupsResource);
+        when(groupsResource.group("group-1")).thenReturn(groupResource);
+        when(groupResource.toRepresentation()).thenReturn(group("group-1", "Backoffice", "/Backoffice"));
+
+        var group = gateway.findGroupById("group-1");
+
+        assertEquals("Backoffice", group.name());
+    }
+
+    @Test
+    void givenUpdateCommand_WhenUpdateGroup_ThenUpdateAndReturnGroup() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var groupsResource = mock(GroupsResource.class);
+        var groupResource = mock(GroupResource.class);
+        var gateway = this.gateway(keycloak);
+
+        when(keycloak.groups()).thenReturn(groupsResource);
+        when(groupsResource.group("group-1")).thenReturn(groupResource);
+        when(groupResource.toRepresentation()).thenReturn(group("group-1", "Operations", "/Operations"));
+
+        var group = gateway.updateGroup("group-1", new UpdateIdentityGroupCommand(
+                "Operations",
+                Map.of("state", List.of("RJ"))
+        ));
+
+        assertEquals("Operations", group.name());
+        verify(groupResource).update(argThat(representation ->
+                "group-1".equals(representation.getId())
+                        && "Operations".equals(representation.getName())
+                        && "RJ".equals(representation.getAttributes().get("state").getFirst())
+        ));
+    }
+
+    @Test
+    void givenId_WhenDeleteGroup_ThenRemoveGroup() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var groupsResource = mock(GroupsResource.class);
+        var groupResource = mock(GroupResource.class);
+        var gateway = this.gateway(keycloak);
+
+        when(keycloak.groups()).thenReturn(groupsResource);
+        when(groupsResource.group("group-1")).thenReturn(groupResource);
+
+        gateway.deleteGroup("group-1");
+
+        verify(groupResource).remove();
     }
 
     private GroupRepresentation group(String id, String name, String path) {

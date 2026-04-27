@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.RoleByIdResource;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UserProfileResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -33,6 +34,10 @@ public class KeycloakAdminSupport {
 
     public RolesResource roles() {
         return this.realm().roles();
+    }
+
+    public RoleByIdResource rolesById() {
+        return this.realm().rolesById();
     }
 
     public UserProfileResource userProfile() {

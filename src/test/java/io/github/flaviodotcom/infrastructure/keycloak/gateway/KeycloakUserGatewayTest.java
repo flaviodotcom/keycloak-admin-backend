@@ -1,14 +1,16 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
-import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatcher;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
@@ -17,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class KeycloakUserGatewayTest {
@@ -215,6 +219,46 @@ class KeycloakUserGatewayTest {
 
         assertEquals(1, users.size());
         assertEquals("jose.teste", users.getFirst().username());
+    }
+
+    @Test
+    void givenInsensitiveAttribute_WhenUpdateUser_ThenPersistInternalSearchAttribute() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var attributeGateway = mock(IdentityUserAttributeGateway.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var gateway = gateway(keycloak, attributeGateway);
+        var updatedUser = user("user-1", "pedro.teste", "pedro.teste@email.com", "Pedro", "Teste", true);
+        updatedUser.setAttributes(Map.of(
+                "name", List.of("Pedro Paulo Timbo Teste"),
+                "__search_name", List.of("pedro paulo timbo teste")
+        ));
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        when(attributeGateway.findAttribute("name")).thenReturn(new IdentityUserAttribute(
+                "name",
+                Map.of(),
+                true,
+                false,
+                false
+        ));
+        when(userResource.toRepresentation()).thenReturn(updatedUser);
+
+        var user = gateway.updateUser("user-1", new UpdateIdentityUserCommand(
+                "pedro.teste",
+                "pedro.teste@email.com",
+                "Pedro",
+                "Teste",
+                true,
+                false,
+                Map.of("name", List.of("Pedro Paulo Timbó Teste"))
+        ));
+
+        assertEquals("pedro.teste", user.username());
+        verify(userResource).update(argThat(representation ->
+                List.of("pedro paulo timbo teste").equals(representation.getAttributes().get("__search_name"))
+        ));
     }
 
     private UsersResource usersResource() {

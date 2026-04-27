@@ -62,4 +62,56 @@ class RoleResourceIT {
                 .header("Location", equalTo("http://localhost:8081/v1/roles/role-99"))
                 .body("name", equalTo("read-users"));
     }
+
+    @Test
+    void givenId_WhenFindRoleById_ThenReturnRole() {
+        when(this.identityRoleGateway.findRoleById("role-1")).thenReturn(
+                new IdentityRole("role-1", "manage-users", "Manage users", false, false, "realm")
+        );
+
+        given()
+                .when()
+                .get("/v1/roles/role-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("role-1"))
+                .body("name", equalTo("manage-users"));
+    }
+
+    @Test
+    void givenValidRequest_WhenUpdateRole_ThenReturnUpdatedRole() {
+        when(this.identityRoleGateway.updateRole(any(), any())).thenReturn(
+                new IdentityRole("role-1", "manage-users-updated", "Manage users updated", false, false, "realm")
+        );
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "name": "manage-users-updated",
+                          "description": "Manage users updated"
+                        }
+                        """)
+                .when()
+                .put("/v1/roles/role-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("role-1"))
+                .body("name", equalTo("manage-users-updated"));
+
+        verify(this.identityRoleGateway).updateRole(argThat("role-1"::equals), argThat(command ->
+                "manage-users-updated".equals(command.name())
+        ));
+    }
+
+    @Test
+    void givenId_WhenDeleteRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/roles/role-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleGateway).deleteRole("role-1");
+    }
 }

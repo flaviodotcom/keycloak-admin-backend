@@ -84,6 +84,81 @@ class UserResourceIT {
     }
 
     @Test
+    void givenId_WhenFindUserById_ThenReturnUser() {
+        when(this.identityUserGateway.findUserById("user-1")).thenReturn(new IdentityUser(
+                "user-1",
+                "john",
+                "john@example.com",
+                "John",
+                "Doe",
+                true,
+                true,
+                123L,
+                Map.of()
+        ));
+
+        given()
+                .when()
+                .get("/v1/users/user-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("user-1"))
+                .body("username", equalTo("john"));
+    }
+
+    @Test
+    void givenValidRequest_WhenUpdateUser_ThenReturnUpdatedResponse() {
+        when(this.identityUserGateway.updateUser(any(), any())).thenReturn(new IdentityUser(
+                "user-1",
+                "john.updated",
+                "john.updated@example.com",
+                "John",
+                "Updated",
+                true,
+                false,
+                123L,
+                Map.of("department", List.of("IT"))
+        ));
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "username": "john.updated",
+                          "email": "john.updated@example.com",
+                          "firstName": "John",
+                          "lastName": "Updated",
+                          "attributes": {
+                            "department": ["IT"]
+                          }
+                        }
+                        """)
+                .when()
+                .put("/v1/users/user-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("user-1"))
+                .body("username", equalTo("john.updated"))
+                .body("attributes.department[0]", equalTo("IT"));
+
+        verify(this.identityUserGateway).updateUser(argThat("user-1"::equals), argThat(command ->
+                "john.updated".equals(command.username())
+                        && "IT".equals(command.attributes().get("department").getFirst())
+        ));
+    }
+
+    @Test
+    void givenId_WhenDeleteUser_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/users/user-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityUserGateway).deleteUser("user-1");
+    }
+
+    @Test
     void givenWebApplicationException_WhenCreateUser_ThenReturnOriginalStatusAndBody() {
         when(this.identityUserGateway.createUser(any()))
                 .thenThrow(new WebApplicationException("{\"error\":\"User already exists\"}", 409));

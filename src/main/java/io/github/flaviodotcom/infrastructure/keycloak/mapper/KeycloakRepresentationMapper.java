@@ -3,6 +3,9 @@ package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityGroupCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityRoleCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
@@ -66,6 +69,19 @@ public class KeycloakRepresentationMapper {
         return representation;
     }
 
+    public UserRepresentation toUserRepresentation(String id, UpdateIdentityUserCommand command) {
+        var representation = new UserRepresentation();
+        representation.setId(id);
+        representation.setUsername(command.username());
+        representation.setEmail(command.email());
+        representation.setFirstName(command.firstName());
+        representation.setLastName(command.lastName());
+        representation.setEnabled(command.enabled());
+        representation.setEmailVerified(command.emailVerified());
+        representation.setAttributes(this.copyAttributes(command.attributes(), true));
+        return representation;
+    }
+
     public GroupRepresentation toGroupRepresentation(CreateIdentityGroupCommand command) {
         var representation = new GroupRepresentation();
         representation.setName(command.name());
@@ -73,8 +89,24 @@ public class KeycloakRepresentationMapper {
         return representation;
     }
 
+    public GroupRepresentation toGroupRepresentation(String id, UpdateIdentityGroupCommand command) {
+        var representation = new GroupRepresentation();
+        representation.setId(id);
+        representation.setName(command.name());
+        representation.setAttributes(this.copyAttributes(command.attributes(), false));
+        return representation;
+    }
+
     public RoleRepresentation toRoleRepresentation(CreateIdentityRoleCommand command) {
         var representation = new RoleRepresentation();
+        representation.setName(command.name());
+        representation.setDescription(command.description());
+        return representation;
+    }
+
+    public RoleRepresentation toRoleRepresentation(String id, UpdateIdentityRoleCommand command) {
+        var representation = new RoleRepresentation();
+        representation.setId(id);
         representation.setName(command.name());
         representation.setDescription(command.description());
         return representation;

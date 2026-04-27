@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
@@ -40,6 +41,15 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     }
 
     @Override
+    public IdentityUser findUserById(String id) {
+        try {
+            return this.mapper.toIdentityUser(this.keycloak.users().get(id).toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
     public IdentityUser createUser(CreateIdentityUserCommand command) {
         try {
             var userRepresentation = this.mapper.toUserRepresentation(
@@ -51,6 +61,30 @@ public class KeycloakUserGateway implements IdentityUserGateway {
                 var userId = CreatedResourceLocation.extractId(response);
                 return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
             }
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public IdentityUser updateUser(String id, UpdateIdentityUserCommand command) {
+        try {
+            var userResource = this.keycloak.users().get(id);
+            var userRepresentation = this.mapper.toUserRepresentation(
+                    id,
+                    command.withAttributes(this.attributeIndex.index(command.attributes()))
+            );
+            userResource.update(userRepresentation);
+            return this.mapper.toIdentityUser(userResource.toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public void deleteUser(String id) {
+        try {
+            this.keycloak.users().get(id).remove();
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
         }

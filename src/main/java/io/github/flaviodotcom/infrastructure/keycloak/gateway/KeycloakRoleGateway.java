@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityRoleCommand;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityRole;
@@ -37,10 +38,38 @@ public class KeycloakRoleGateway implements IdentityRoleGateway {
     }
 
     @Override
+    public IdentityRole findRoleById(String id) {
+        try {
+            return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
     public IdentityRole createRole(CreateIdentityRoleCommand command) {
         try {
             this.keycloak.roles().create(this.mapper.toRoleRepresentation(command));
             return this.mapper.toIdentityRole(this.keycloak.roles().get(command.name()).toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public IdentityRole updateRole(String id, UpdateIdentityRoleCommand command) {
+        try {
+            this.keycloak.rolesById().updateRole(id, this.mapper.toRoleRepresentation(id, command));
+            return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public void deleteRole(String id) {
+        try {
+            this.keycloak.rolesById().deleteRole(id);
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
         }

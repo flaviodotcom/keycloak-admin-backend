@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityGroupCommand;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
@@ -38,6 +39,15 @@ public class KeycloakGroupGateway implements IdentityGroupGateway {
     }
 
     @Override
+    public IdentityGroup findGroupById(String id) {
+        try {
+            return this.mapper.toIdentityGroup(this.keycloak.groups().group(id).toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
     public IdentityGroup createGroup(CreateIdentityGroupCommand command) {
         try {
             var groupRepresentation = this.mapper.toGroupRepresentation(command);
@@ -49,6 +59,26 @@ public class KeycloakGroupGateway implements IdentityGroupGateway {
                 var groupId = CreatedResourceLocation.extractId(response);
                 return this.mapper.toIdentityGroup(this.keycloak.groups().group(groupId).toRepresentation());
             }
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public IdentityGroup updateGroup(String id, UpdateIdentityGroupCommand command) {
+        try {
+            var groupResource = this.keycloak.groups().group(id);
+            groupResource.update(this.mapper.toGroupRepresentation(id, command));
+            return this.mapper.toIdentityGroup(groupResource.toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public void deleteGroup(String id) {
+        try {
+            this.keycloak.groups().group(id).remove();
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
         }

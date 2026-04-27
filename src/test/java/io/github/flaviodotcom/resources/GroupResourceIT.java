@@ -64,4 +64,61 @@ class GroupResourceIT {
                 .header("Location", equalTo("http://localhost:8081/v1/groups/group-99"))
                 .body("name", equalTo("Operations"));
     }
+
+    @Test
+    void givenId_WhenFindGroupById_ThenReturnGroup() {
+        when(this.identityGroupGateway.findGroupById("group-1")).thenReturn(
+                new IdentityGroup("group-1", "Backoffice", "/Backoffice", Map.of("state", List.of("RJ")))
+        );
+
+        given()
+                .when()
+                .get("/v1/groups/group-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("group-1"))
+                .body("name", equalTo("Backoffice"))
+                .body("attributes.state[0]", equalTo("RJ"));
+    }
+
+    @Test
+    void givenValidRequest_WhenUpdateGroup_ThenReturnUpdatedGroup() {
+        when(this.identityGroupGateway.updateGroup(any(), any())).thenReturn(
+                new IdentityGroup("group-1", "Operations", "/Operations", Map.of("state", List.of("SP")))
+        );
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "name": "Operations",
+                          "attributes": {
+                            "state": ["SP"]
+                          }
+                        }
+                        """)
+                .when()
+                .put("/v1/groups/group-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("group-1"))
+                .body("name", equalTo("Operations"))
+                .body("attributes.state[0]", equalTo("SP"));
+
+        verify(this.identityGroupGateway).updateGroup(argThat("group-1"::equals), argThat(command ->
+                "Operations".equals(command.name())
+                        && "SP".equals(command.attributes().get("state").getFirst())
+        ));
+    }
+
+    @Test
+    void givenId_WhenDeleteGroup_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/groups/group-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityGroupGateway).deleteGroup("group-1");
+    }
 }
