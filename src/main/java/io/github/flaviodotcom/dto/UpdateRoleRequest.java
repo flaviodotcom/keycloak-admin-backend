@@ -4,7 +4,7 @@ import io.github.flaviodotcom.domain.identity.command.UpdateIdentityRoleCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record UpdateRoleRequest(
-        @NotBlank(message = "name is required")
+        @NotBlank(message = "{validation.name.required}")
         String name,
         String description
 ) {

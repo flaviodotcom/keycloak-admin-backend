@@ -1,10 +1,11 @@
 package io.github.flaviodotcom.resources.support;
 
+import io.github.flaviodotcom.exceptions.LocalizedWebApplicationException;
+import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 
@@ -76,7 +77,7 @@ public class QueryCriteriaMapper {
             var allowed = allowedParams.contains(parameterName)
                     || allowAttributes && parameterName.startsWith(ATTRIBUTE_PREFIX);
             if (!allowed) {
-                throw new BadRequestException("Unsupported query param '%s'.".formatted(parameterName));
+                throw badRequest("error.query-param.unsupported", parameterName);
             }
         }
     }
@@ -90,7 +91,7 @@ public class QueryCriteriaMapper {
 
             var attributeName = parameter.getKey().substring(ATTRIBUTE_PREFIX.length()).strip();
             if (attributeName.isBlank()) {
-                throw new BadRequestException("Attribute filter name cannot be blank.");
+                throw badRequest("error.attribute-filter.blank-name");
             }
 
             attributes.put(attributeName, this.readSingleValue(parameter.getKey(), parameter.getValue()));
@@ -112,7 +113,7 @@ public class QueryCriteriaMapper {
             return false;
         }
 
-        throw new BadRequestException("Query param '%s' must be 'true' or 'false'.".formatted(name));
+        throw badRequest("error.query-param.invalid-boolean", name);
     }
 
     private String readString(MultivaluedMap<String, String> queryParams, String name) {
@@ -129,14 +130,18 @@ public class QueryCriteriaMapper {
 
     private String readSingleValue(String name, List<String> values) {
         if (values.size() != 1) {
-            throw new BadRequestException("Query param '%s' must be informed only once.".formatted(name));
+            throw badRequest("error.query-param.multiple-values", name);
         }
 
         var value = values.getFirst();
         if (value == null || value.isBlank()) {
-            throw new BadRequestException("Query param '%s' cannot be blank.".formatted(name));
+            throw badRequest("error.query-param.blank", name);
         }
 
         return value.strip();
+    }
+
+    private LocalizedWebApplicationException badRequest(String messageKey, Object... messageArgs) {
+        return new LocalizedWebApplicationException(400, messageKey, Messages.getDefault(messageKey, messageArgs), messageArgs);
     }
 }

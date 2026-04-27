@@ -8,11 +8,11 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
 public record CreateUserAttributeRequest(
-        @NotBlank(message = "name is required")
+        @NotBlank(message = "{validation.name.required}")
         String name,
-        @NotEmpty(message = "displayName is required")
-        Map<@NotBlank(message = "displayName locale is required") String, @NotBlank(message = "displayName text is required") String> displayName,
-        @NotNull(message = "insensitive is required")
+        @NotEmpty(message = "{validation.display-name.required}")
+        Map<@NotBlank(message = "{validation.display-name.locale.required}") String, @NotBlank(message = "{validation.display-name.text.required}") String> displayName,
+        @NotNull(message = "{validation.insensitive.required}")
         Boolean insensitive,
         Boolean required,
         Boolean multivalued

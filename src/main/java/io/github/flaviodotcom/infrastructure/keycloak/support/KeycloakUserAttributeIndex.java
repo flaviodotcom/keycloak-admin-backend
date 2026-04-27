@@ -3,6 +3,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.support;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
 import io.github.flaviodotcom.domain.shared.TextFilterMatcher;
+import io.github.flaviodotcom.i18n.Messages;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 
@@ -22,7 +23,7 @@ public class KeycloakUserAttributeIndex {
         for (var attribute : attributes.entrySet()) {
             var name = attribute.getKey();
             SearchableAttributeName.requirePublicName(name);
-            var values = List.copyOf(Objects.requireNonNull(attribute.getValue(), "Attribute values are required."));
+            var values = List.copyOf(Objects.requireNonNull(attribute.getValue(), Messages.getDefault("error.attribute-values.required")));
             indexedAttributes.put(name, values);
 
             var definition = this.identityUserAttributeGateway.findAttribute(name);

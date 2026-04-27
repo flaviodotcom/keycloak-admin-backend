@@ -2,6 +2,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.candidate;
 
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.domain.shared.SearchTermBuilder;
+import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,7 @@ public class KeycloakRoleCandidateFinder {
         var rolesById = new LinkedHashMap<String, RoleRepresentation>();
         for (var term : SearchTermBuilder.build(criteria.name())) {
             for (var role : this.keycloak.roles().list(term, FIRST_RESULT, MAX_RESULTS, false)) {
-                rolesById.putIfAbsent(Objects.requireNonNull(role.getId(), "Keycloak role id is required."), role);
+                rolesById.putIfAbsent(Objects.requireNonNull(role.getId(), Messages.getDefault("error.keycloak.role-id.required")), role);
             }
         }
         return List.copyOf(rolesById.values());

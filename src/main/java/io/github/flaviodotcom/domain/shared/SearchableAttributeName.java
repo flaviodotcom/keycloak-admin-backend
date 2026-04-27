@@ -1,5 +1,8 @@
 package io.github.flaviodotcom.domain.shared;
 
+import io.github.flaviodotcom.exceptions.LocalizedIllegalArgumentException;
+import io.github.flaviodotcom.i18n.Messages;
+
 public final class SearchableAttributeName {
 
     private static final String INTERNAL_PREFIX = "__search_";
@@ -17,7 +20,8 @@ public final class SearchableAttributeName {
 
     public static void requirePublicName(String attributeName) {
         if (isInternalName(attributeName)) {
-            throw new IllegalArgumentException("Attribute name '%s' is reserved for internal search indexes.".formatted(attributeName));
+            var messageKey = "error.attribute-name.internal-reserved";
+            throw new LocalizedIllegalArgumentException(messageKey, Messages.getDefault(messageKey, attributeName), attributeName);
         }
     }
 }

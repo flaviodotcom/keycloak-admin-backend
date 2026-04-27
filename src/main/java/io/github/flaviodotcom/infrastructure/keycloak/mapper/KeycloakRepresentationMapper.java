@@ -10,6 +10,7 @@ import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
+import io.github.flaviodotcom.i18n.Messages;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -119,9 +120,9 @@ public class KeycloakRepresentationMapper {
 
         var copiedAttributes = new LinkedHashMap<String, List<String>>();
         for (var attribute : attributes.entrySet()) {
-            var key = Objects.requireNonNull(attribute.getKey(), "Attribute key is required.");
+            var key = Objects.requireNonNull(attribute.getKey(), Messages.getDefault("error.attribute-key.required"));
             if (!writable && SearchableAttributeName.isInternalName(key)) continue;
-            var values = List.copyOf(Objects.requireNonNull(attribute.getValue(), "Attribute values are required."));
+            var values = List.copyOf(Objects.requireNonNull(attribute.getValue(), Messages.getDefault("error.attribute-values.required")));
             copiedAttributes.put(key, values);
         }
         return Map.copyOf(copiedAttributes);

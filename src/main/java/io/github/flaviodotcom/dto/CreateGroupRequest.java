@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public record CreateGroupRequest(
-        @NotBlank(message = "name is required")
+        @NotBlank(message = "{validation.name.required}")
         String name,
         String parentGroupId,
         Map<String, List<String>> attributes

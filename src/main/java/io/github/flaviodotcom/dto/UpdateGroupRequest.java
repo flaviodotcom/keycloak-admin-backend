@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public record UpdateGroupRequest(
-        @NotBlank(message = "name is required")
+        @NotBlank(message = "{validation.name.required}")
         String name,
         Map<String, List<String>> attributes
 ) {

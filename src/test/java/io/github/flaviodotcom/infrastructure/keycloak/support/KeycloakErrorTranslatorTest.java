@@ -12,7 +12,8 @@ class KeycloakErrorTranslatorTest {
 
         var translated = KeycloakErrorTranslator.translate(409, detail);
 
-        assertEquals("A user already exists with the provided username or email.", translated);
+        assertEquals("A user already exists with the provided username or email.", translated.detail());
+        assertEquals("keycloak.error.user-conflict.username-or-email", translated.messageKey());
     }
 
     @Test
@@ -21,7 +22,8 @@ class KeycloakErrorTranslatorTest {
 
         var translated = KeycloakErrorTranslator.translate(409, detail);
 
-        assertEquals("A user already exists with the provided username.", translated);
+        assertEquals("A user already exists with the provided username.", translated.detail());
+        assertEquals("keycloak.error.user-conflict.username", translated.messageKey());
     }
 
     @Test
@@ -30,7 +32,8 @@ class KeycloakErrorTranslatorTest {
 
         var translated = KeycloakErrorTranslator.translate(409, detail);
 
-        assertEquals("A user already exists with the provided email.", translated);
+        assertEquals("A user already exists with the provided email.", translated.detail());
+        assertEquals("keycloak.error.user-conflict.email", translated.messageKey());
     }
 
     @Test
@@ -48,7 +51,8 @@ class KeycloakErrorTranslatorTest {
 
         var translated = KeycloakErrorTranslator.translate(400, detail);
 
-        assertEquals("Required user attribute 'cpf' was not provided.", translated);
+        assertEquals("Required user attribute 'cpf' was not provided.", translated.detail());
+        assertEquals("keycloak.error.user-attribute.required.named", translated.messageKey());
     }
 
     @Test
@@ -57,6 +61,6 @@ class KeycloakErrorTranslatorTest {
 
         var translated = KeycloakErrorTranslator.translate(400, detail);
 
-        assertEquals(detail, translated);
+        assertEquals(detail, translated.detail());
     }
 }

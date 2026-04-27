@@ -70,6 +70,78 @@ class UserResourceIT {
     }
 
     @Test
+    void givenWildcardLanguage_WhenFindUsersWithInvalidBooleanParam_ThenReturnDefaultEnglishProblem() {
+        given()
+                .header("Accept-Language", "*")
+                .when()
+                .get("/v1/users?enabled=invalid")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Bad Request"))
+                .body("detail", equalTo("Query param 'enabled' must be 'true' or 'false'."));
+    }
+
+    @Test
+    void givenPortugueseLanguage_WhenFindUsersWithInvalidBooleanParam_ThenReturnLocalizedProblem() {
+        given()
+                .header("Accept-Language", "pt-BR")
+                .when()
+                .get("/v1/users?enabled=invalid")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Requisição inválida"))
+                .body("detail", equalTo("Parâmetro de consulta 'enabled' deve ser 'true' ou 'false'."));
+    }
+
+    @Test
+    void givenWildcardLanguage_WhenCreateUserWithoutUsername_ThenReturnDefaultEnglishValidationProblem() {
+        given()
+                .header("Accept-Language", "*")
+                .contentType("application/json")
+                .body("{}")
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Invalid request data"))
+                .body("detail", equalTo("One or more fields are invalid."))
+                .body("messages[0].name", equalTo("username"))
+                .body("messages[0].message", equalTo("username is required"));
+    }
+
+    @Test
+    void givenEnglishLanguage_WhenCreateUserWithoutUsername_ThenReturnEnglishValidationProblem() {
+        given()
+                .header("Accept-Language", "en")
+                .contentType("application/json")
+                .body("{}")
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Invalid request data"))
+                .body("detail", equalTo("One or more fields are invalid."))
+                .body("messages[0].name", equalTo("username"))
+                .body("messages[0].message", equalTo("username is required"));
+    }
+
+    @Test
+    void givenPortugueseLanguage_WhenCreateUserWithoutUsername_ThenReturnLocalizedValidationProblem() {
+        given()
+                .header("Accept-Language", "pt-BR")
+                .contentType("application/json")
+                .body("{}")
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Dados da requisição inválidos"))
+                .body("detail", equalTo("Um ou mais campos estão inválidos."))
+                .body("messages[0].name", equalTo("username"))
+                .body("messages[0].message", equalTo("username é obrigatório"));
+    }
+
+    @Test
     void givenBusinessException_WhenFindUsers_ThenReturnUnprocessableEntityProblem() {
         when(this.identityUserGateway.findUsers(any(UserSearchCriteria.class)))
                 .thenThrow(new BusinessException("User rule failed."));

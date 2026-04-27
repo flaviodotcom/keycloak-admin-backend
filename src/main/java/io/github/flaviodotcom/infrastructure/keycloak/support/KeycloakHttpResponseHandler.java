@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.infrastructure.keycloak.support;
 
+import io.github.flaviodotcom.exceptions.LocalizedWebApplicationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -20,6 +21,16 @@ public final class KeycloakHttpResponseHandler {
         var detail = response.hasEntity()
                 ? response.readEntity(String.class)
                 : response.getStatusInfo().getReasonPhrase();
-        return new WebApplicationException(KeycloakErrorTranslator.translate(response.getStatus(), detail), response.getStatus());
+        var translatedError = KeycloakErrorTranslator.translate(response.getStatus(), detail);
+        if (translatedError.localized()) {
+            return new LocalizedWebApplicationException(
+                    response.getStatus(),
+                    translatedError.messageKey(),
+                    translatedError.detail(),
+                    translatedError.messageArgs()
+            );
+        }
+
+        return new WebApplicationException(translatedError.detail(), response.getStatus());
     }
 }

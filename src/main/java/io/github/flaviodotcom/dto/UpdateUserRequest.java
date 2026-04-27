@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public record UpdateUserRequest(
-        @NotBlank(message = "username is required")
+        @NotBlank(message = "{validation.username.required}")
         String username,
         String email,
         String firstName,

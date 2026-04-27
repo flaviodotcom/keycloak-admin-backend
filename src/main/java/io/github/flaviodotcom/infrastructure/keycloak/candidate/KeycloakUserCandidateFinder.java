@@ -2,6 +2,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.candidate;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.shared.SearchTermBuilder;
+import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -69,7 +70,7 @@ public class KeycloakUserCandidateFinder {
 
     private void addUsersById(Map<String, UserRepresentation> usersById, List<UserRepresentation> users) {
         for (var user : users) {
-            usersById.putIfAbsent(Objects.requireNonNull(user.getId(), "Keycloak user id is required."), user);
+            usersById.putIfAbsent(Objects.requireNonNull(user.getId(), Messages.getDefault("error.keycloak.user-id.required")), user);
         }
     }
 

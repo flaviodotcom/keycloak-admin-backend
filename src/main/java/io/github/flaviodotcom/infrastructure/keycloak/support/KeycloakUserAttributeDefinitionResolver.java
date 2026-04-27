@@ -24,7 +24,7 @@ public class KeycloakUserAttributeDefinitionResolver {
         SearchableAttributeName.requirePublicName(attributeName);
         var attribute = config.getAttribute(attributeName);
         if (attribute == null) {
-            throw new BusinessException("User attribute '%s' is not configured.".formatted(attributeName));
+            throw BusinessException.localized("error.user-attribute.not-configured", attributeName);
         }
 
         return this.mapper.toIdentityUserAttribute(attribute);
@@ -32,7 +32,7 @@ public class KeycloakUserAttributeDefinitionResolver {
 
     private void ensureAttributeDoesNotExist(UPConfig config, String attributeName) {
         if (config.getAttribute(attributeName) != null) {
-            throw new BusinessException("User attribute '%s' is already configured.".formatted(attributeName));
+            throw BusinessException.localized("error.user-attribute.already-configured", attributeName);
         }
     }
 }

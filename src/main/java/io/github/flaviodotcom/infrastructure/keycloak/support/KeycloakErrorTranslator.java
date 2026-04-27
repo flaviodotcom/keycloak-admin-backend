@@ -1,17 +1,13 @@
 package io.github.flaviodotcom.infrastructure.keycloak.support;
 
+import io.github.flaviodotcom.i18n.Messages;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 public final class KeycloakErrorTranslator {
-
-    private static final String USERNAME_CONFLICT_MESSAGE = "A user already exists with the provided username.";
-    private static final String EMAIL_CONFLICT_MESSAGE = "A user already exists with the provided email.";
-    private static final String USERNAME_OR_EMAIL_CONFLICT_MESSAGE = "A user already exists with the provided username or email.";
-    private static final String REQUIRED_ATTRIBUTE_MESSAGE = "A required user attribute was not provided.";
-    private static final String REQUIRED_ATTRIBUTE_MESSAGE_PATTERN = "Required user attribute '%s' was not provided.";
 
     private static final List<Pattern> ATTRIBUTE_NAME_PATTERNS = List.of(
             Pattern.compile("\"field\"\\s*:\\s*\"([^\"]+)\""),
@@ -21,7 +17,7 @@ public final class KeycloakErrorTranslator {
     private KeycloakErrorTranslator() {
     }
 
-    public static String translate(int status, String detail) {
+    public static Result translate(int status, String detail) {
         var normalizedDetail = normalize(detail);
         if (isUserConflict(status, normalizedDetail)) {
             return translateUserConflict(normalizedDetail);
@@ -31,7 +27,7 @@ public final class KeycloakErrorTranslator {
             return translateRequiredUserAttribute(detail);
         }
 
-        return detail;
+        return Result.original(detail);
     }
 
     private static boolean isUserConflict(int status, String normalizedDetail) {
@@ -42,20 +38,20 @@ public final class KeycloakErrorTranslator {
                 || normalizedDetail.contains("same username or email"));
     }
 
-    private static String translateUserConflict(String normalizedDetail) {
+    private static Result translateUserConflict(String normalizedDetail) {
         if (normalizedDetail.contains("same username or email")) {
-            return USERNAME_OR_EMAIL_CONFLICT_MESSAGE;
+            return Result.localized("keycloak.error.user-conflict.username-or-email");
         }
 
         if (normalizedDetail.contains("same username")) {
-            return USERNAME_CONFLICT_MESSAGE;
+            return Result.localized("keycloak.error.user-conflict.username");
         }
 
         if (normalizedDetail.contains("same email")) {
-            return EMAIL_CONFLICT_MESSAGE;
+            return Result.localized("keycloak.error.user-conflict.email");
         }
 
-        return USERNAME_OR_EMAIL_CONFLICT_MESSAGE;
+        return Result.localized("keycloak.error.user-conflict.username-or-email");
     }
 
     private static boolean isRequiredUserAttribute(int status, String normalizedDetail) {
@@ -65,10 +61,10 @@ public final class KeycloakErrorTranslator {
                 || normalizedDetail.contains("user attribute") && normalizedDetail.contains("required"));
     }
 
-    private static String translateRequiredUserAttribute(String detail) {
+    private static Result translateRequiredUserAttribute(String detail) {
         return extractAttributeName(detail)
-                .map(REQUIRED_ATTRIBUTE_MESSAGE_PATTERN::formatted)
-                .orElse(REQUIRED_ATTRIBUTE_MESSAGE);
+                .map(attributeName -> Result.localized("keycloak.error.user-attribute.required.named", attributeName))
+                .orElse(Result.localized("keycloak.error.user-attribute.required"));
     }
 
     private static Optional<String> extractAttributeName(String detail) {
@@ -104,5 +100,20 @@ public final class KeycloakErrorTranslator {
 
     private static String normalize(String detail) {
         return detail == null ? "" : detail.toLowerCase(Locale.ROOT);
+    }
+
+    public record Result(String detail, String messageKey, Object[] messageArgs) {
+
+        public static Result original(String detail) {
+            return new Result(detail, null, new Object[0]);
+        }
+
+        public static Result localized(String messageKey, Object... messageArgs) {
+            return new Result(Messages.getDefault(messageKey, messageArgs), messageKey, messageArgs == null ? new Object[0] : messageArgs.clone());
+        }
+
+        public boolean localized() {
+            return this.messageKey != null;
+        }
     }
 }

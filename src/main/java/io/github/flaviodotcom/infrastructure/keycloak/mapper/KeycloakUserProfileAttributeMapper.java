@@ -84,6 +84,6 @@ public class KeycloakUserProfileAttributeMapper {
             return insensitive;
         }
 
-        throw new BusinessException("User attribute '%s' has an invalid insensitive metadata value.".formatted(attribute.getName()));
+        throw BusinessException.localized("error.user-attribute.invalid-insensitive-metadata", attribute.getName());
     }
 }

@@ -4,7 +4,7 @@ import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateRoleRequest(
-        @NotBlank(message = "name is required")
+        @NotBlank(message = "{validation.name.required}")
         String name,
         String description
 ) {
