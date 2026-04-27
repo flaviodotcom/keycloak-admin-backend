@@ -31,6 +31,10 @@ public final class KeycloakErrorTranslator {
             return translateRequiredUserAttribute(detail);
         }
 
+        if (isUpdatePasswordEmailFailure(status, context)) {
+            return Result.localized("keycloak.error.update-password-email.unavailable");
+        }
+
         return Result.original(detail);
     }
 
@@ -81,6 +85,10 @@ public final class KeycloakErrorTranslator {
         return extractAttributeName(detail)
                 .map(attributeName -> Result.localized("keycloak.error.user-attribute.required.named", attributeName))
                 .orElse(Result.localized("keycloak.error.user-attribute.required"));
+    }
+
+    private static boolean isUpdatePasswordEmailFailure(int status, KeycloakErrorContext context) {
+        return status == 500 && context == KeycloakErrorContext.UPDATE_PASSWORD_EMAIL;
     }
 
     private static Optional<String> extractAttributeName(String detail) {

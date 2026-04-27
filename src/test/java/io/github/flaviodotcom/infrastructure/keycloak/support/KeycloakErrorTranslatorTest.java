@@ -71,6 +71,21 @@ class KeycloakErrorTranslatorTest {
     }
 
     @Test
+    void givenUpdatePasswordEmailFailure_WhenTranslate_ThenReturnFriendlyMessage() {
+        var translated = KeycloakErrorTranslator.translate(500, "Internal Server Error", KeycloakErrorContext.UPDATE_PASSWORD_EMAIL);
+
+        assertEquals("Could not send the update password email. Check the SMTP configuration.", translated.detail());
+        assertEquals("keycloak.error.update-password-email.unavailable", translated.messageKey());
+    }
+
+    @Test
+    void givenInternalServerErrorWithoutContext_WhenTranslate_ThenKeepOriginalDetail() {
+        var translated = KeycloakErrorTranslator.translate(500, "Internal Server Error");
+
+        assertEquals("Internal Server Error", translated.detail());
+    }
+
+    @Test
     void givenUnknownError_WhenTranslate_ThenKeepOriginalDetail() {
         var detail = "{\"error\":\"unknown_error\"}";
 

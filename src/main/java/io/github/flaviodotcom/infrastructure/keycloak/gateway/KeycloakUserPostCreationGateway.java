@@ -2,6 +2,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserPostCreationGateway;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakErrorContext;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
@@ -34,7 +35,7 @@ public class KeycloakUserPostCreationGateway implements IdentityUserPostCreation
         try {
             this.keycloak.users().get(userId).executeActionsEmail(List.of(UPDATE_PASSWORD_ACTION));
         } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse(), KeycloakErrorContext.UPDATE_PASSWORD_EMAIL);
         }
     }
 }

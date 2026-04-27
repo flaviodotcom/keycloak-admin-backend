@@ -44,4 +44,14 @@ class KeycloakHttpResponseHandlerTest {
 
         assertSame(exception, translated);
     }
+
+    @Test
+    void givenUpdatePasswordEmailFailure_WhenToWebApplicationException_ThenTranslateDetail() {
+        var response = Response.status(500).build();
+
+        var exception = KeycloakHttpResponseHandler.toWebApplicationException(response, KeycloakErrorContext.UPDATE_PASSWORD_EMAIL);
+
+        assertEquals(500, exception.getResponse().getStatus());
+        assertTrue(exception.getMessage().contains("Could not send the update password email. Check the SMTP configuration."));
+    }
 }
