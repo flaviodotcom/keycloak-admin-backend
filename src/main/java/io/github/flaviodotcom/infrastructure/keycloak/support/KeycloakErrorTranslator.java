@@ -18,8 +18,12 @@ public final class KeycloakErrorTranslator {
     }
 
     public static Result translate(int status, String detail) {
+        return translate(status, detail, KeycloakErrorContext.GENERAL);
+    }
+
+    public static Result translate(int status, String detail, KeycloakErrorContext context) {
         var normalizedDetail = normalize(detail);
-        if (isUserConflict(status, normalizedDetail)) {
+        if (isUserConflict(status, normalizedDetail, context)) {
             return translateUserConflict(normalizedDetail);
         }
 
@@ -30,12 +34,24 @@ public final class KeycloakErrorTranslator {
         return Result.original(detail);
     }
 
-    private static boolean isUserConflict(int status, String normalizedDetail) {
-        return status == 409
-                && normalizedDetail.contains("user exists")
+    private static boolean isUserConflict(int status, String normalizedDetail, KeycloakErrorContext context) {
+        if (status != 409) {
+            return false;
+        }
+
+        return hasUserConflictDetail(normalizedDetail)
+                || context == KeycloakErrorContext.USER_CREATION && isGenericConflict(normalizedDetail);
+    }
+
+    private static boolean hasUserConflictDetail(String normalizedDetail) {
+        return normalizedDetail.contains("user exists")
                 && (normalizedDetail.contains("same username")
                 || normalizedDetail.contains("same email")
                 || normalizedDetail.contains("same username or email"));
+    }
+
+    private static boolean isGenericConflict(String normalizedDetail) {
+        return normalizedDetail.isBlank() || "conflict".equals(normalizedDetail);
     }
 
     private static Result translateUserConflict(String normalizedDetail) {

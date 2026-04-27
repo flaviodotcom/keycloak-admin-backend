@@ -37,6 +37,21 @@ class KeycloakErrorTranslatorTest {
     }
 
     @Test
+    void givenGenericConflictDuringUserCreation_WhenTranslate_ThenReturnUsernameOrEmailConflictMessage() {
+        var translated = KeycloakErrorTranslator.translate(409, "Conflict", KeycloakErrorContext.USER_CREATION);
+
+        assertEquals("A user already exists with the provided username or email.", translated.detail());
+        assertEquals("keycloak.error.user-conflict.username-or-email", translated.messageKey());
+    }
+
+    @Test
+    void givenGenericConflictWithoutContext_WhenTranslate_ThenKeepOriginalDetail() {
+        var translated = KeycloakErrorTranslator.translate(409, "Conflict");
+
+        assertEquals("Conflict", translated.detail());
+    }
+
+    @Test
     void givenRequiredAttributeError_WhenTranslate_ThenReturnFriendlyMessageWithAttributeName() {
         var detail = """
                 {

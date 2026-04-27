@@ -11,6 +11,7 @@ import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentat
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatcher;
 import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLocation;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakErrorContext;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -59,14 +60,14 @@ public class KeycloakUserGateway implements IdentityUserGateway {
             );
 
             try (var response = this.keycloak.users().create(userRepresentation)) {
-                KeycloakHttpResponseHandler.ensureCreated(response);
+                KeycloakHttpResponseHandler.ensureCreated(response, KeycloakErrorContext.USER_CREATION);
                 var userId = CreatedResourceLocation.extractId(response);
                 this.postCreationGateway.assignGroups(userId, command.groupIds());
                 this.postCreationGateway.sendUpdatePasswordEmail(userId);
                 return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
             }
         } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception, KeycloakErrorContext.USER_CREATION);
         }
     }
 

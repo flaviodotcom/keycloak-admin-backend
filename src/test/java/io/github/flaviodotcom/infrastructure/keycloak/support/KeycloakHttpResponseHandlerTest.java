@@ -1,9 +1,11 @@
 package io.github.flaviodotcom.infrastructure.keycloak.support;
 
+import io.github.flaviodotcom.exceptions.LocalizedWebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class KeycloakHttpResponseHandlerTest {
@@ -18,5 +20,28 @@ class KeycloakHttpResponseHandlerTest {
 
         assertEquals(409, exception.getResponse().getStatus());
         assertTrue(exception.getMessage().contains("A user already exists with the provided username or email."));
+    }
+
+    @Test
+    void givenGenericConflictDuringUserCreation_WhenToWebApplicationException_ThenTranslateDetail() {
+        var response = Response.status(409).build();
+
+        var exception = KeycloakHttpResponseHandler.toWebApplicationException(response, KeycloakErrorContext.USER_CREATION);
+
+        assertEquals(409, exception.getResponse().getStatus());
+        assertTrue(exception.getMessage().contains("A user already exists with the provided username or email."));
+    }
+
+    @Test
+    void givenLocalizedException_WhenToWebApplicationException_ThenPreserveOriginalException() {
+        var exception = new LocalizedWebApplicationException(
+                409,
+                "keycloak.error.user-conflict.username-or-email",
+                "A user already exists with the provided username or email."
+        );
+
+        var translated = KeycloakHttpResponseHandler.toWebApplicationException(exception, KeycloakErrorContext.USER_CREATION);
+
+        assertSame(exception, translated);
     }
 }
