@@ -20,6 +20,6 @@ public final class KeycloakHttpResponseHandler {
         var detail = response.hasEntity()
                 ? response.readEntity(String.class)
                 : response.getStatusInfo().getReasonPhrase();
-        return new WebApplicationException(detail, response.getStatus());
+        return new WebApplicationException(KeycloakErrorTranslator.translate(response.getStatus(), detail), response.getStatus());
     }
 }
