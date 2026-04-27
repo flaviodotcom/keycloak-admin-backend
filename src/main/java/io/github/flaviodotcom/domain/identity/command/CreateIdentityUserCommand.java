@@ -10,13 +10,15 @@ public record CreateIdentityUserCommand(
         String lastName,
         Boolean enabled,
         Boolean emailVerified,
-        Map<String, List<String>> attributes
+        Map<String, List<String>> attributes,
+        List<String> groupIds
 ) {
 
     public CreateIdentityUserCommand {
         enabled = enabled == null ? Boolean.TRUE : enabled;
         emailVerified = emailVerified == null ? Boolean.FALSE : emailVerified;
         attributes = attributes == null ? Map.of() : attributes;
+        groupIds = groupIds == null ? List.of() : List.copyOf(groupIds);
     }
 
     public CreateIdentityUserCommand withAttributes(Map<String, List<String>> attributes) {
@@ -27,7 +29,8 @@ public record CreateIdentityUserCommand(
                 this.lastName,
                 this.enabled,
                 this.emailVerified,
-                attributes
+                attributes,
+                this.groupIds
         );
     }
 }

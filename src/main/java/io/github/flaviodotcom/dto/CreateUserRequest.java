@@ -14,13 +14,15 @@ public record CreateUserRequest(
         String lastName,
         Boolean enabled,
         Boolean emailVerified,
-        Map<String, List<String>> attributes
+        Map<String, List<String>> attributes,
+        List<String> groupIds
 ) {
 
     public CreateUserRequest {
         enabled = enabled == null ? Boolean.TRUE : enabled;
         emailVerified = emailVerified == null ? Boolean.FALSE : emailVerified;
         attributes = attributes == null ? Map.of() : attributes;
+        groupIds = groupIds == null ? List.of() : List.copyOf(groupIds);
     }
 
     public CreateIdentityUserCommand toCommand() {
@@ -31,7 +33,8 @@ public record CreateUserRequest(
                 this.lastName,
                 this.enabled,
                 this.emailVerified,
-                this.attributes
+                this.attributes,
+                this.groupIds
         );
     }
 }

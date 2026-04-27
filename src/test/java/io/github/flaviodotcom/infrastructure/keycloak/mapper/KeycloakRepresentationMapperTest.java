@@ -47,7 +47,8 @@ class KeycloakRepresentationMapperTest {
                 "Stone",
                 true,
                 true,
-                Map.of("profile", List.of("admin"))
+                Map.of("profile", List.of("admin")),
+                List.of()
         );
 
         var userRepresentation = this.mapper.toUserRepresentation(command);
@@ -70,7 +71,8 @@ class KeycloakRepresentationMapperTest {
                 Map.of(
                         "name", List.of("Pedro Paulo Timbo Teste"),
                         "__search_name", List.of("pedro paulo timbo teste")
-                )
+                ),
+                List.of()
         );
 
         var userRepresentation = this.mapper.toUserRepresentation(command);

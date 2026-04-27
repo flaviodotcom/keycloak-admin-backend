@@ -4,6 +4,7 @@ import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserPostCreationGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
@@ -27,6 +28,7 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     private final KeycloakRepresentationMapper mapper;
     private final KeycloakUserMatcher matcher;
     private final KeycloakUserAttributeIndex attributeIndex;
+    private final IdentityUserPostCreationGateway postCreationGateway;
 
     @Override
     public List<IdentityUser> findUsers(UserSearchCriteria criteria) {
@@ -59,6 +61,8 @@ public class KeycloakUserGateway implements IdentityUserGateway {
             try (var response = this.keycloak.users().create(userRepresentation)) {
                 KeycloakHttpResponseHandler.ensureCreated(response);
                 var userId = CreatedResourceLocation.extractId(response);
+                this.postCreationGateway.assignGroups(userId, command.groupIds());
+                this.postCreationGateway.sendUpdatePasswordEmail(userId);
                 return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
             }
         } catch (WebApplicationException exception) {

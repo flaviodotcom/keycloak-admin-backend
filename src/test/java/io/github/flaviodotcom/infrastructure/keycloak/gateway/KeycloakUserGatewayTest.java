@@ -1,8 +1,10 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
+import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserPostCreationGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
@@ -15,8 +17,11 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.ws.rs.core.Response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -222,6 +227,38 @@ class KeycloakUserGatewayTest {
     }
 
     @Test
+    void givenGroupIds_WhenCreateUser_ThenAssignGroupsAndSendUpdatePasswordEmail() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var postCreationGateway = mock(IdentityUserPostCreationGateway.class);
+        var gateway = gateway(keycloak, mock(IdentityUserAttributeGateway.class), postCreationGateway);
+        var createdUser = user("user-1", "pedro.teste", "pedro.teste@email.com", "Pedro", "Teste", true);
+        var response = Response.created(URI.create("http://localhost:8080/admin/realms/test/users/user-1")).build();
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.create(argThat(representation -> "pedro.teste".equals(representation.getUsername()))))
+                .thenReturn(response);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(createdUser);
+
+        var user = gateway.createUser(new CreateIdentityUserCommand(
+                "pedro.teste",
+                "pedro.teste@email.com",
+                "Pedro",
+                "Teste",
+                true,
+                false,
+                Map.of(),
+                List.of("group-1", "group-2")
+        ));
+
+        assertEquals("user-1", user.id());
+        verify(postCreationGateway).assignGroups("user-1", List.of("group-1", "group-2"));
+        verify(postCreationGateway).sendUpdatePasswordEmail("user-1");
+    }
+
+    @Test
     void givenInsensitiveAttribute_WhenUpdateUser_ThenPersistInternalSearchAttribute() {
         var keycloak = mock(KeycloakAdminSupport.class);
         var attributeGateway = mock(IdentityUserAttributeGateway.class);
@@ -272,13 +309,20 @@ class KeycloakUserGatewayTest {
     }
 
     private KeycloakUserGateway gateway(KeycloakAdminSupport keycloak, IdentityUserAttributeGateway attributeGateway) {
+        return this.gateway(keycloak, attributeGateway, mock(IdentityUserPostCreationGateway.class));
+    }
+
+    private KeycloakUserGateway gateway(KeycloakAdminSupport keycloak,
+                                        IdentityUserAttributeGateway attributeGateway,
+                                        IdentityUserPostCreationGateway postCreationGateway) {
         var attributeIndex = new KeycloakUserAttributeIndex(attributeGateway);
         return new KeycloakUserGateway(
                 keycloak,
                 new KeycloakUserCandidateFinder(keycloak, attributeIndex),
                 new KeycloakRepresentationMapper(),
                 new KeycloakUserMatcher(attributeIndex),
-                attributeIndex
+                attributeIndex,
+                postCreationGateway
         );
     }
 

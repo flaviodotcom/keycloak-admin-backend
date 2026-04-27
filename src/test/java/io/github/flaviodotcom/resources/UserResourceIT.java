@@ -159,6 +159,45 @@ class UserResourceIT {
     }
 
     @Test
+    void givenGroupIds_WhenCreateUser_ThenForwardGroupsToGateway() {
+        when(this.identityUserGateway.createUser(any())).thenReturn(new IdentityUser(
+                "user-1",
+                "pedro.teste",
+                "pedro.teste@email.com",
+                "Pedro",
+                "Teste",
+                true,
+                false,
+                123L,
+                Map.of()
+        ));
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "username": "pedro.teste",
+                          "email": "pedro.teste@email.com",
+                          "firstName": "Pedro",
+                          "lastName": "Teste",
+                          "groupIds": ["group-1", "group-2"]
+                        }
+                        """)
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(201)
+                .header("Location", equalTo("http://localhost:8081/v1/users/user-1"))
+                .body("id", equalTo("user-1"))
+                .body("username", equalTo("pedro.teste"));
+
+        verify(this.identityUserGateway).createUser(argThat(command ->
+                "pedro.teste".equals(command.username())
+                        && List.of("group-1", "group-2").equals(command.groupIds())
+        ));
+    }
+
+    @Test
     void givenWebApplicationException_WhenCreateUser_ThenReturnOriginalStatusAndBody() {
         when(this.identityUserGateway.createUser(any()))
                 .thenThrow(new WebApplicationException("{\"error\":\"User already exists\"}", 409));
