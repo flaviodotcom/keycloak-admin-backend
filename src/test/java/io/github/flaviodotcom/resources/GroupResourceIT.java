@@ -39,8 +39,11 @@ class GroupResourceIT {
                 .get("/v1/groups?search=back&exact=false&attr.state=RJ")
                 .then()
                 .statusCode(200)
-                .body("[0].id", equalTo("group-1"))
-                .body("[0].attributes.state[0]", equalTo("RJ"));
+                .body("content[0].id", equalTo("group-1"))
+                .body("content[0].attributes.state[0]", equalTo("RJ"))
+                .body("page", equalTo(0))
+                .body("size", equalTo(10))
+                .body("totalElements", equalTo(1));
 
         verify(this.identityGroupGateway).findGroups(argThat(criteria ->
                 "back".equals(criteria.search())
@@ -107,8 +110,11 @@ class GroupResourceIT {
                 .get("/v1/groups/group-1/members")
                 .then()
                 .statusCode(200)
-                .body("[0].id", equalTo("user-1"))
-                .body("[0].username", equalTo("john"));
+                .body("content[0].id", equalTo("user-1"))
+                .body("content[0].username", equalTo("john"))
+                .body("page", equalTo(0))
+                .body("size", equalTo(10))
+                .body("totalElements", equalTo(1));
 
         verify(this.identityMembershipGateway).findGroupMembers("group-1");
     }

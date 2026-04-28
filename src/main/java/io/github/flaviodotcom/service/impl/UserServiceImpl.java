@@ -1,19 +1,20 @@
 package io.github.flaviodotcom.service.impl;
 
-import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.dto.CreateUserRequest;
 import io.github.flaviodotcom.dto.UpdateUserRequest;
 import io.github.flaviodotcom.dto.UserGroupResponse;
 import io.github.flaviodotcom.dto.UserResponse;
 import io.github.flaviodotcom.dto.UserResponseOptions;
+import io.github.flaviodotcom.dto.pagination.PageRequest;
+import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.service.UserService;
+import io.github.flaviodotcom.service.pagination.IdentitySortComparators;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -23,28 +24,27 @@ public class UserServiceImpl implements UserService {
     private final IdentityMembershipGateway identityMembershipGateway;
 
     @Override
-    public List<UserResponse> findUsers(UserSearchCriteria criteria, UserResponseOptions options) {
+    public PageResponse<UserResponse> findUsers(UserSearchCriteria criteria,
+                                                UserResponseOptions options,
+                                                PageRequest pageRequest) {
         var users = this.identityUserGateway.findUsers(criteria);
+        var page = PageResponse.from(users, pageRequest, IdentitySortComparators.userComparator(pageRequest));
         if (!options.includeGroups()) {
-            return users.stream()
-                    .map(UserResponse::fromIdentityUser)
-                    .toList();
+            return page.map(UserResponse::fromIdentityUser);
         }
 
         var groupsByUserId = this.identityMembershipGateway.findUsersGroups(
-                users.stream()
+                page.content().stream()
                         .map(IdentityUser::id)
                         .toList()
         );
 
-        return users.stream()
-                .map(user -> UserResponse.fromIdentityUser(
+        return page.map(user -> UserResponse.fromIdentityUser(
                         user,
                         groupsByUserId.get(user.id()).stream()
                                 .map(UserGroupResponse::fromIdentityGroup)
                                 .toList()
-                ))
-                .toList();
+        ));
     }
 
     @Override

@@ -2,15 +2,15 @@ package io.github.flaviodotcom.service;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.dto.CreateUserRequest;
+import io.github.flaviodotcom.dto.pagination.PageRequest;
+import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.UpdateUserRequest;
 import io.github.flaviodotcom.dto.UserResponse;
 import io.github.flaviodotcom.dto.UserResponseOptions;
 
-import java.util.List;
-
 public interface UserService {
 
-    List<UserResponse> findUsers(UserSearchCriteria criteria, UserResponseOptions options);
+    PageResponse<UserResponse> findUsers(UserSearchCriteria criteria, UserResponseOptions options, PageRequest pageRequest);
 
     UserResponse findUserById(String id, UserResponseOptions options);
 

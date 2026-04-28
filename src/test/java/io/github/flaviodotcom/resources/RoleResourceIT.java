@@ -33,7 +33,10 @@ class RoleResourceIT {
                 .get("/v1/roles?name=manage&exact=false")
                 .then()
                 .statusCode(200)
-                .body("[0].name", equalTo("manage-users"));
+                .body("content[0].name", equalTo("manage-users"))
+                .body("page", equalTo(0))
+                .body("size", equalTo(10))
+                .body("totalElements", equalTo(1));
 
         verify(this.identityRoleGateway).findRoles(argThat(criteria ->
                 "manage".equals(criteria.name())

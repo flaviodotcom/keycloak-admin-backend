@@ -29,7 +29,8 @@ public class UserResource {
     public Response findUsers(@Context UriInfo uriInfo) {
         return Response.ok(this.userService.findUsers(
                 this.queryCriteriaMapper.toUserCriteria(uriInfo),
-                this.queryCriteriaMapper.toUserResponseOptions(uriInfo)
+                this.queryCriteriaMapper.toUserResponseOptions(uriInfo),
+                this.queryCriteriaMapper.toUserPageRequest(uriInfo)
         )).build();
     }
 

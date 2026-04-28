@@ -27,7 +27,10 @@ public class RoleResource {
     @GET
     @Operation(summary = "Find roles by filters")
     public Response findRoles(@Context UriInfo uriInfo) {
-        return Response.ok(this.roleService.findRoles(this.queryCriteriaMapper.toRoleCriteria(uriInfo))).build();
+        return Response.ok(this.roleService.findRoles(
+                this.queryCriteriaMapper.toRoleCriteria(uriInfo),
+                this.queryCriteriaMapper.toRolePageRequest(uriInfo)
+        )).build();
     }
 
     @GET

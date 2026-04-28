@@ -5,6 +5,8 @@ import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
+import io.github.flaviodotcom.dto.pagination.PageRequest;
+import io.github.flaviodotcom.dto.pagination.SortDirection;
 import io.github.flaviodotcom.dto.UserResponseOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -19,6 +21,23 @@ import java.util.Set;
 public class QueryCriteriaMapper {
 
     private static final String ATTRIBUTE_PREFIX = "attr.";
+    private static final int DEFAULT_PAGE = 0;
+    private static final int DEFAULT_SIZE = 10;
+    private static final int MAX_SIZE = 100;
+    private static final String ASC_SORT = "asc";
+    private static final String DESC_SORT = "desc";
+    private static final Set<String> PAGE_PARAMS = Set.of("page", "size", "sort", "sortBy");
+    private static final Set<String> USER_SORT_FIELDS = Set.of(
+            "id",
+            "username",
+            "email",
+            "firstName",
+            "lastName",
+            "enabled",
+            "createdTimestamp"
+    );
+    private static final Set<String> GROUP_SORT_FIELDS = Set.of("id", "name", "path");
+    private static final Set<String> ROLE_SORT_FIELDS = Set.of("id", "name", "description");
     private static final Set<String> USER_PARAMS = Set.of(
             "search",
             "username",
@@ -27,10 +46,14 @@ public class QueryCriteriaMapper {
             "lastName",
             "enabled",
             "exact",
-            "includeGroups"
+            "includeGroups",
+            "page",
+            "size",
+            "sort",
+            "sortBy"
     );
-    private static final Set<String> GROUP_PARAMS = Set.of("search", "name", "exact");
-    private static final Set<String> ROLE_PARAMS = Set.of("name", "exact");
+    private static final Set<String> GROUP_PARAMS = Set.of("search", "name", "exact", "page", "size", "sort", "sortBy");
+    private static final Set<String> ROLE_PARAMS = Set.of("name", "exact", "page", "size", "sort", "sortBy");
 
     public UserSearchCriteria toUserCriteria(UriInfo uriInfo) {
         var queryParams = uriInfo.getQueryParameters();
@@ -52,6 +75,10 @@ public class QueryCriteriaMapper {
         return new UserResponseOptions(Boolean.TRUE.equals(this.readBoolean(uriInfo.getQueryParameters(), "includeGroups")));
     }
 
+    public PageRequest toUserPageRequest(UriInfo uriInfo) {
+        return this.toPageRequest(uriInfo.getQueryParameters(), USER_SORT_FIELDS, "username");
+    }
+
     public GroupSearchCriteria toGroupCriteria(UriInfo uriInfo) {
         var queryParams = uriInfo.getQueryParameters();
         this.validateSupportedParams(queryParams, GROUP_PARAMS, true);
@@ -64,6 +91,16 @@ public class QueryCriteriaMapper {
         );
     }
 
+    public PageRequest toGroupPageRequest(UriInfo uriInfo) {
+        return this.toPageRequest(uriInfo.getQueryParameters(), GROUP_SORT_FIELDS, "name");
+    }
+
+    public PageRequest toGroupMembersPageRequest(UriInfo uriInfo) {
+        var queryParams = uriInfo.getQueryParameters();
+        this.validateSupportedParams(queryParams, PAGE_PARAMS, false);
+        return this.toPageRequest(queryParams, USER_SORT_FIELDS, "username");
+    }
+
     public RoleSearchCriteria toRoleCriteria(UriInfo uriInfo) {
         var queryParams = uriInfo.getQueryParameters();
         this.validateSupportedParams(queryParams, ROLE_PARAMS, false);
@@ -72,6 +109,34 @@ public class QueryCriteriaMapper {
                 this.readString(queryParams, "name"),
                 this.readBoolean(queryParams, "exact")
         );
+    }
+
+    public PageRequest toRolePageRequest(UriInfo uriInfo) {
+        return this.toPageRequest(uriInfo.getQueryParameters(), ROLE_SORT_FIELDS, "name");
+    }
+
+    private PageRequest toPageRequest(MultivaluedMap<String, String> queryParams,
+                                      Set<String> supportedSortFields,
+                                      String defaultSortBy) {
+        var page = this.readInteger(queryParams, "page", DEFAULT_PAGE);
+        var size = this.readInteger(queryParams, "size", DEFAULT_SIZE);
+        if (page < 0) {
+            throw badRequest("error.query-param.min", "page", 0);
+        }
+        if (size < 1) {
+            throw badRequest("error.query-param.min", "size", 1);
+        }
+        if (size > MAX_SIZE) {
+            throw badRequest("error.query-param.max", "size", MAX_SIZE);
+        }
+
+        var sortBy = this.readString(queryParams, "sortBy");
+        sortBy = sortBy == null ? defaultSortBy : sortBy;
+        if (!supportedSortFields.contains(sortBy)) {
+            throw badRequest("error.query-param.unsupported-sort-by", sortBy);
+        }
+
+        return new PageRequest(page, size, sortBy, this.readSortDirection(queryParams));
     }
 
     private void validateSupportedParams(
@@ -124,6 +189,32 @@ public class QueryCriteriaMapper {
 
     private String readString(MultivaluedMap<String, String> queryParams, String name) {
         return this.readOptionalValue(queryParams, name);
+    }
+
+    private Integer readInteger(MultivaluedMap<String, String> queryParams, String name, Integer defaultValue) {
+        var value = this.readOptionalValue(queryParams, name);
+        if (value == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw badRequest("error.query-param.invalid-integer", name);
+        }
+    }
+
+    private SortDirection readSortDirection(MultivaluedMap<String, String> queryParams) {
+        var value = this.readOptionalValue(queryParams, "sort");
+        if (value == null || ASC_SORT.equalsIgnoreCase(value)) {
+            return SortDirection.ASC;
+        }
+
+        if (DESC_SORT.equalsIgnoreCase(value)) {
+            return SortDirection.DESC;
+        }
+
+        throw badRequest("error.query-param.invalid-sort", "sort");
     }
 
     private String readOptionalValue(MultivaluedMap<String, String> queryParams, String name) {

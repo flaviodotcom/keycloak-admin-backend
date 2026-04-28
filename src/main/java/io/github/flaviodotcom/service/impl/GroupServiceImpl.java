@@ -5,13 +5,14 @@ import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.dto.CreateGroupRequest;
 import io.github.flaviodotcom.dto.GroupResponse;
+import io.github.flaviodotcom.dto.pagination.PageRequest;
+import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.UpdateGroupRequest;
 import io.github.flaviodotcom.dto.UserResponse;
 import io.github.flaviodotcom.service.GroupService;
+import io.github.flaviodotcom.service.pagination.IdentitySortComparators;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -21,10 +22,12 @@ public class GroupServiceImpl implements GroupService {
     private final IdentityMembershipGateway identityMembershipGateway;
 
     @Override
-    public List<GroupResponse> findGroups(GroupSearchCriteria criteria) {
-        return this.identityGroupGateway.findGroups(criteria).stream()
-                .map(GroupResponse::fromIdentityGroup)
-                .toList();
+    public PageResponse<GroupResponse> findGroups(GroupSearchCriteria criteria, PageRequest pageRequest) {
+        return PageResponse.from(
+                this.identityGroupGateway.findGroups(criteria),
+                pageRequest,
+                IdentitySortComparators.groupComparator(pageRequest)
+        ).map(GroupResponse::fromIdentityGroup);
     }
 
     @Override
@@ -33,10 +36,12 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<UserResponse> findGroupMembers(String id) {
-        return this.identityMembershipGateway.findGroupMembers(id).stream()
-                .map(UserResponse::fromIdentityUser)
-                .toList();
+    public PageResponse<UserResponse> findGroupMembers(String id, PageRequest pageRequest) {
+        return PageResponse.from(
+                this.identityMembershipGateway.findGroupMembers(id),
+                pageRequest,
+                IdentitySortComparators.userComparator(pageRequest)
+        ).map(UserResponse::fromIdentityUser);
     }
 
     @Override

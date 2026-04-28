@@ -22,6 +22,7 @@ application.
 - Group membership lookup through `GET /v1/groups/{id}/members`.
 - User creation with optional group assignment through `groupIds`.
 - Optional group expansion in user responses with `includeGroups=true`.
+- Paginated list responses with `page`, `size`, `sort` and `sortBy`.
 - Keycloak update-password email action after user creation.
 - Managed User Profile attribute creation.
 - Case-insensitive and accent-insensitive search support for configured fields.
@@ -135,6 +136,32 @@ Authorization: Bearer <access-token>
 
 ## API Overview
 
+List endpoints return a paginated response:
+
+```json
+{
+  "content": [],
+  "page": 0,
+  "size": 10,
+  "totalElements": 0,
+  "totalPages": 0,
+  "first": true,
+  "last": true
+}
+```
+
+Pagination defaults:
+
+- `page`: `0`
+- `size`: `10`
+- `sort`: `asc`
+- `size` maximum: `100`
+
+The API applies pagination after the final in-memory filtering and sorting step.
+This is intentional: some filters are case-insensitive, accent-insensitive or
+depend on data that Keycloak cannot page correctly by itself. Applying API
+pagination before those filters could return incomplete pages.
+
 ### Users
 
 | Method | Path | Description |
@@ -158,11 +185,15 @@ Supported query parameters for `GET /v1/users`:
 | `exact` | Controls exact matching. Accepts `true` or `false`. |
 | `includeGroups` | When `true`, includes lightweight group objects in each user response. |
 | `attr.<name>` | Filters by a User Profile attribute. |
+| `page` | Zero-based page index. Defaults to `0`. |
+| `size` | Page size. Defaults to `10`, maximum `100`. |
+| `sort` | Sort direction. Accepts `asc` or `desc`. Defaults to `asc`. |
+| `sortBy` | Sort field. Supports `id`, `username`, `email`, `firstName`, `lastName`, `enabled`, `createdTimestamp`. Defaults to `username`. |
 
 Example:
 
 ```http
-GET /v1/users?search=Maria&enabled=true&attr.departamento=RH
+GET /v1/users?search=Maria&enabled=true&attr.departamento=RH&page=0&size=10&sortBy=username&sort=asc
 ```
 
 Including groups:
@@ -176,24 +207,34 @@ When `includeGroups=true` is used, each user may contain:
 
 ```json
 {
-  "id": "user-id",
-  "username": "maria.teste",
-  "email": "maria.teste@email.com",
-  "firstName": "Maria",
-  "lastName": "Teste",
-  "enabled": true,
-  "emailVerified": false,
-  "createdTimestamp": 1777039859679,
-  "attributes": {
-    "departamento": ["RH"]
-  },
-  "groups": [
+  "content": [
     {
-      "id": "group-id",
-      "name": "Financeiro",
-      "path": "/Financeiro"
+      "id": "user-id",
+      "username": "maria.teste",
+      "email": "maria.teste@email.com",
+      "firstName": "Maria",
+      "lastName": "Teste",
+      "enabled": true,
+      "emailVerified": false,
+      "createdTimestamp": 1777039859679,
+      "attributes": {
+        "departamento": ["RH"]
+      },
+      "groups": [
+        {
+          "id": "group-id",
+          "name": "Financeiro",
+          "path": "/Financeiro"
+        }
+      ]
     }
-  ]
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true
 }
 ```
 
@@ -274,6 +315,10 @@ Supported query parameters for `GET /v1/groups`:
 | `name` | Filters by group name. |
 | `exact` | Controls exact matching. Accepts `true` or `false`. |
 | `attr.<name>` | Filters by a group attribute. |
+| `page` | Zero-based page index. Defaults to `0`. |
+| `size` | Page size. Defaults to `10`, maximum `100`. |
+| `sort` | Sort direction. Accepts `asc` or `desc`. Defaults to `asc`. |
+| `sortBy` | Sort field. Supports `id`, `name`, `path`. Defaults to `name`. |
 
 Create group:
 
@@ -304,11 +349,14 @@ Update group:
 Group members:
 
 ```http
-GET /v1/groups/{id}/members
+GET /v1/groups/{id}/members?page=0&size=10&sortBy=username&sort=asc
 ```
 
-The response is a list of users. It does not include each member's groups unless
-a future endpoint explicitly supports that expansion.
+The response is paginated and contains users. It does not include each member's
+groups unless a future endpoint explicitly supports that expansion.
+
+Supported member sort fields are `id`, `username`, `email`, `firstName`,
+`lastName`, `enabled` and `createdTimestamp`.
 
 ### Roles
 
@@ -326,6 +374,10 @@ Supported query parameters for `GET /v1/roles`:
 | --- | --- |
 | `name` | Filters by role name. |
 | `exact` | Controls exact matching. Accepts `true` or `false`. |
+| `page` | Zero-based page index. Defaults to `0`. |
+| `size` | Page size. Defaults to `10`, maximum `100`. |
+| `sort` | Sort direction. Accepts `asc` or `desc`. Defaults to `asc`. |
+| `sortBy` | Sort field. Supports `id`, `name`, `description`. Defaults to `name`. |
 
 Create role:
 
@@ -417,6 +469,10 @@ The API validates query parameters strictly:
 - Repeated query parameters return `400 Bad Request`.
 - Blank query parameter values return `400 Bad Request`.
 - Boolean values accept only `true` or `false`, case-insensitive.
+- `page` must be greater than or equal to `0`.
+- `size` must be between `1` and `100`.
+- `sort` accepts only `asc` or `desc`.
+- `sortBy` accepts only fields supported by the requested resource.
 - Attribute filter names cannot be blank.
 
 Invalid examples:
@@ -426,6 +482,9 @@ GET /v1/users?enabled=true&enabled=false
 GET /v1/users?username=
 GET /v1/users?unknown=value
 GET /v1/users?attr.=value
+GET /v1/users?page=-1
+GET /v1/users?size=500
+GET /v1/users?sort=random
 ```
 
 ## Internationalization

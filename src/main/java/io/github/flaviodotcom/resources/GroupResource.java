@@ -27,7 +27,10 @@ public class GroupResource {
     @GET
     @Operation(summary = "Find groups by filters")
     public Response findGroups(@Context UriInfo uriInfo) {
-        return Response.ok(this.groupService.findGroups(this.queryCriteriaMapper.toGroupCriteria(uriInfo))).build();
+        return Response.ok(this.groupService.findGroups(
+                this.queryCriteriaMapper.toGroupCriteria(uriInfo),
+                this.queryCriteriaMapper.toGroupPageRequest(uriInfo)
+        )).build();
     }
 
     @GET
@@ -40,8 +43,11 @@ public class GroupResource {
     @GET
     @Path("{id}/members")
     @Operation(summary = "Find members of a group")
-    public Response findGroupMembers(@PathParam("id") String id) {
-        return Response.ok(this.groupService.findGroupMembers(id)).build();
+    public Response findGroupMembers(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        return Response.ok(this.groupService.findGroupMembers(
+                id,
+                this.queryCriteriaMapper.toGroupMembersPageRequest(uriInfo)
+        )).build();
     }
 
     @POST

@@ -53,9 +53,13 @@ class UserResourceIT {
                 .get("/v1/users?username=john&enabled=true&exact=true&attr.department=IT")
                 .then()
                 .statusCode(200)
-                .body("[0].username", equalTo("john"))
-                .body("[0].attributes.department[0]", equalTo("IT"))
-                .body("[0].groups", nullValue());
+                .body("content[0].username", equalTo("john"))
+                .body("content[0].attributes.department[0]", equalTo("IT"))
+                .body("content[0].groups", nullValue())
+                .body("page", equalTo(0))
+                .body("size", equalTo(10))
+                .body("totalElements", equalTo(1))
+                .body("totalPages", equalTo(1));
 
         verify(this.identityUserGateway).findUsers(argThat(criteria ->
                 "john".equals(criteria.username())
@@ -91,11 +95,11 @@ class UserResourceIT {
                 .get("/v1/users?includeGroups=true")
                 .then()
                 .statusCode(200)
-                .body("[0].groups[0].id", equalTo("group-1"))
-                .body("[0].groups[0].name", equalTo("Financeiro"))
-                .body("[0].groups[0].path", equalTo("/Financeiro"))
-                .body("[0].groups[1].id", equalTo("group-2"))
-                .body("[0].groups[1].name", equalTo("TI"));
+                .body("content[0].groups[0].id", equalTo("group-1"))
+                .body("content[0].groups[0].name", equalTo("Financeiro"))
+                .body("content[0].groups[0].path", equalTo("/Financeiro"))
+                .body("content[0].groups[1].id", equalTo("group-2"))
+                .body("content[0].groups[1].name", equalTo("TI"));
 
         verify(this.identityUserGateway).findUsers(any(UserSearchCriteria.class));
         verify(this.identityMembershipGateway).findUsersGroups(List.of("user-1"));
@@ -110,6 +114,40 @@ class UserResourceIT {
                 .statusCode(400)
                 .body("title", equalTo("Bad Request"))
                 .body("detail", containsString("enabled"));
+    }
+
+    @Test
+    void givenInvalidPageParam_WhenFindUsers_ThenReturnBadRequestProblem() {
+        given()
+                .when()
+                .get("/v1/users?page=-1")
+                .then()
+                .statusCode(400)
+                .body("title", equalTo("Bad Request"))
+                .body("detail", equalTo("Query param 'page' must be greater than or equal to 0."));
+    }
+
+    @Test
+    void givenPaginationParams_WhenFindUsers_ThenSortAndPageAfterGatewayResult() {
+        when(this.identityUserGateway.findUsers(any(UserSearchCriteria.class))).thenReturn(List.of(
+                user("user-1", "maria"),
+                user("user-2", "ana"),
+                user("user-3", "jose")
+        ));
+
+        given()
+                .when()
+                .get("/v1/users?page=1&size=1&sortBy=username&sort=asc")
+                .then()
+                .statusCode(200)
+                .body("content[0].id", equalTo("user-3"))
+                .body("content[0].username", equalTo("jose"))
+                .body("page", equalTo(1))
+                .body("size", equalTo(1))
+                .body("totalElements", equalTo(3))
+                .body("totalPages", equalTo(3))
+                .body("first", equalTo(false))
+                .body("last", equalTo(false));
     }
 
     @Test
@@ -375,5 +413,19 @@ class UserResourceIT {
                 .statusCode(500)
                 .body("title", equalTo("Internal server error"))
                 .body("detail", equalTo("Unexpected failure."));
+    }
+
+    private IdentityUser user(String id, String username) {
+        return new IdentityUser(
+                id,
+                username,
+                "%s@example.com".formatted(username),
+                username,
+                "User",
+                true,
+                true,
+                123L,
+                Map.of()
+        );
     }
 }

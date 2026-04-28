@@ -3,13 +3,14 @@ package io.github.flaviodotcom.service.impl;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.dto.CreateRoleRequest;
+import io.github.flaviodotcom.dto.pagination.PageRequest;
+import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.RoleResponse;
 import io.github.flaviodotcom.dto.UpdateRoleRequest;
 import io.github.flaviodotcom.service.RoleService;
+import io.github.flaviodotcom.service.pagination.IdentitySortComparators;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -18,10 +19,12 @@ public class RoleServiceImpl implements RoleService {
     private final IdentityRoleGateway identityRoleGateway;
 
     @Override
-    public List<RoleResponse> findRoles(RoleSearchCriteria criteria) {
-        return this.identityRoleGateway.findRoles(criteria).stream()
-                .map(RoleResponse::fromIdentityRole)
-                .toList();
+    public PageResponse<RoleResponse> findRoles(RoleSearchCriteria criteria, PageRequest pageRequest) {
+        return PageResponse.from(
+                this.identityRoleGateway.findRoles(criteria),
+                pageRequest,
+                IdentitySortComparators.roleComparator(pageRequest)
+        ).map(RoleResponse::fromIdentityRole);
     }
 
     @Override
