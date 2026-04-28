@@ -27,14 +27,17 @@ public class UserResource {
     @GET
     @Operation(summary = "Find users by filters")
     public Response findUsers(@Context UriInfo uriInfo) {
-        return Response.ok(this.userService.findUsers(this.queryCriteriaMapper.toUserCriteria(uriInfo))).build();
+        return Response.ok(this.userService.findUsers(
+                this.queryCriteriaMapper.toUserCriteria(uriInfo),
+                this.queryCriteriaMapper.toUserResponseOptions(uriInfo)
+        )).build();
     }
 
     @GET
     @Path("{id}")
     @Operation(summary = "Find a user by id")
-    public Response findUserById(@PathParam("id") String id) {
-        return Response.ok(this.userService.findUserById(id)).build();
+    public Response findUserById(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        return Response.ok(this.userService.findUserById(id, this.queryCriteriaMapper.toUserResponseOptions(uriInfo))).build();
     }
 
     @POST

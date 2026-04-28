@@ -3,6 +3,8 @@ package io.github.flaviodotcom.resources;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,9 @@ class GroupResourceIT {
 
     @InjectMock
     IdentityGroupGateway identityGroupGateway;
+
+    @InjectMock
+    IdentityMembershipGateway identityMembershipGateway;
 
     @Test
     void givenQueryParams_WhenFindGroups_ThenMapKnownAndAttributeFilters() {
@@ -79,6 +84,33 @@ class GroupResourceIT {
                 .body("id", equalTo("group-1"))
                 .body("name", equalTo("Backoffice"))
                 .body("attributes.state[0]", equalTo("RJ"));
+    }
+
+    @Test
+    void givenId_WhenFindGroupMembers_ThenReturnUsers() {
+        when(this.identityMembershipGateway.findGroupMembers("group-1")).thenReturn(List.of(
+                new IdentityUser(
+                        "user-1",
+                        "john",
+                        "john@example.com",
+                        "John",
+                        "Doe",
+                        true,
+                        true,
+                        123L,
+                        Map.of()
+                )
+        ));
+
+        given()
+                .when()
+                .get("/v1/groups/group-1/members")
+                .then()
+                .statusCode(200)
+                .body("[0].id", equalTo("user-1"))
+                .body("[0].username", equalTo("john"));
+
+        verify(this.identityMembershipGateway).findGroupMembers("group-1");
     }
 
     @Test

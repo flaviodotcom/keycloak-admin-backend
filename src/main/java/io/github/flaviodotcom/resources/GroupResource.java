@@ -37,6 +37,13 @@ public class GroupResource {
         return Response.ok(this.groupService.findGroupById(id)).build();
     }
 
+    @GET
+    @Path("{id}/members")
+    @Operation(summary = "Find members of a group")
+    public Response findGroupMembers(@PathParam("id") String id) {
+        return Response.ok(this.groupService.findGroupMembers(id)).build();
+    }
+
     @POST
     @Operation(summary = "Create a group")
     public Response createGroup(@Valid CreateGroupRequest request, @Context UriInfo uriInfo) {

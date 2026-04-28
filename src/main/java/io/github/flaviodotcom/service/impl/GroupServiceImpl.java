@@ -2,9 +2,11 @@ package io.github.flaviodotcom.service.impl;
 
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.dto.CreateGroupRequest;
 import io.github.flaviodotcom.dto.GroupResponse;
 import io.github.flaviodotcom.dto.UpdateGroupRequest;
+import io.github.flaviodotcom.dto.UserResponse;
 import io.github.flaviodotcom.service.GroupService;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 public class GroupServiceImpl implements GroupService {
 
     private final IdentityGroupGateway identityGroupGateway;
+    private final IdentityMembershipGateway identityMembershipGateway;
 
     @Override
     public List<GroupResponse> findGroups(GroupSearchCriteria criteria) {
@@ -27,6 +30,13 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public GroupResponse findGroupById(String id) {
         return GroupResponse.fromIdentityGroup(this.identityGroupGateway.findGroupById(id));
+    }
+
+    @Override
+    public List<UserResponse> findGroupMembers(String id) {
+        return this.identityMembershipGateway.findGroupMembers(id).stream()
+                .map(UserResponse::fromIdentityUser)
+                .toList();
     }
 
     @Override

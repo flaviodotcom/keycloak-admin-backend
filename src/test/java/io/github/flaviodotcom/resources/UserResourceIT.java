@@ -1,6 +1,8 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.exceptions.BusinessException;
@@ -15,6 +17,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
@@ -25,6 +28,9 @@ class UserResourceIT {
 
     @InjectMock
     IdentityUserGateway identityUserGateway;
+
+    @InjectMock
+    IdentityMembershipGateway identityMembershipGateway;
 
     @Test
     void givenQueryParams_WhenFindUsers_ThenForwardCriteriaToGateway() {
@@ -48,7 +54,8 @@ class UserResourceIT {
                 .then()
                 .statusCode(200)
                 .body("[0].username", equalTo("john"))
-                .body("[0].attributes.department[0]", equalTo("IT"));
+                .body("[0].attributes.department[0]", equalTo("IT"))
+                .body("[0].groups", nullValue());
 
         verify(this.identityUserGateway).findUsers(argThat(criteria ->
                 "john".equals(criteria.username())
@@ -56,6 +63,42 @@ class UserResourceIT {
                         && Boolean.TRUE.equals(criteria.exact())
                         && "IT".equals(criteria.attributes().get("department"))
         ));
+    }
+
+    @Test
+    void givenIncludeGroups_WhenFindUsers_ThenReturnGroups() {
+        when(this.identityUserGateway.findUsers(any(UserSearchCriteria.class))).thenReturn(List.of(
+                new IdentityUser(
+                        "user-1",
+                        "john",
+                        "john@example.com",
+                        "John",
+                        "Doe",
+                        true,
+                        true,
+                        123L,
+                        Map.of()
+                )
+        ));
+        when(this.identityMembershipGateway.findUsersGroups(List.of("user-1")))
+                .thenReturn(Map.of("user-1", List.of(
+                        new IdentityGroup("group-1", "Financeiro", "/Financeiro", Map.of()),
+                        new IdentityGroup("group-2", "TI", "/TI", Map.of())
+                )));
+
+        given()
+                .when()
+                .get("/v1/users?includeGroups=true")
+                .then()
+                .statusCode(200)
+                .body("[0].groups[0].id", equalTo("group-1"))
+                .body("[0].groups[0].name", equalTo("Financeiro"))
+                .body("[0].groups[0].path", equalTo("/Financeiro"))
+                .body("[0].groups[1].id", equalTo("group-2"))
+                .body("[0].groups[1].name", equalTo("TI"));
+
+        verify(this.identityUserGateway).findUsers(any(UserSearchCriteria.class));
+        verify(this.identityMembershipGateway).findUsersGroups(List.of("user-1"));
     }
 
     @Test
@@ -175,7 +218,38 @@ class UserResourceIT {
                 .then()
                 .statusCode(200)
                 .body("id", equalTo("user-1"))
-                .body("username", equalTo("john"));
+                .body("username", equalTo("john"))
+                .body("groups", nullValue());
+    }
+
+    @Test
+    void givenIncludeGroups_WhenFindUserById_ThenReturnGroups() {
+        when(this.identityUserGateway.findUserById("user-1")).thenReturn(new IdentityUser(
+                "user-1",
+                "john",
+                "john@example.com",
+                "John",
+                "Doe",
+                true,
+                true,
+                123L,
+                Map.of()
+        ));
+        when(this.identityMembershipGateway.findUserGroups("user-1")).thenReturn(List.of(
+                new IdentityGroup("group-1", "Financeiro", "/Financeiro", Map.of())
+        ));
+
+        given()
+                .when()
+                .get("/v1/users/user-1?includeGroups=true")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("user-1"))
+                .body("groups[0].id", equalTo("group-1"))
+                .body("groups[0].name", equalTo("Financeiro"))
+                .body("groups[0].path", equalTo("/Financeiro"));
+
+        verify(this.identityMembershipGateway).findUserGroups("user-1");
     }
 
     @Test

@@ -5,6 +5,7 @@ import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
+import io.github.flaviodotcom.dto.UserResponseOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
@@ -25,7 +26,8 @@ public class QueryCriteriaMapper {
             "firstName",
             "lastName",
             "enabled",
-            "exact"
+            "exact",
+            "includeGroups"
     );
     private static final Set<String> GROUP_PARAMS = Set.of("search", "name", "exact");
     private static final Set<String> ROLE_PARAMS = Set.of("name", "exact");
@@ -44,6 +46,10 @@ public class QueryCriteriaMapper {
                 this.readBoolean(queryParams, "exact"),
                 this.readAttributes(queryParams)
         );
+    }
+
+    public UserResponseOptions toUserResponseOptions(UriInfo uriInfo) {
+        return new UserResponseOptions(Boolean.TRUE.equals(this.readBoolean(uriInfo.getQueryParameters(), "includeGroups")));
     }
 
     public GroupSearchCriteria toGroupCriteria(UriInfo uriInfo) {
