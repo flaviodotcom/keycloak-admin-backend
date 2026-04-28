@@ -140,10 +140,21 @@ access the realm, readiness fails and the pod should not receive traffic.
 
 ## Authentication
 
-The project is configured with Quarkus OIDC. Requests are expected to be sent
-with a valid bearer token for the configured realm/client.
+The project is integrated with Quarkus OIDC, so it can validate bearer tokens
+issued by the configured Keycloak realm/client.
 
-Example:
+By default, the current REST endpoints are not protected with security
+annotations. This keeps the open source base flexible for different deployment
+models, but production applications should explicitly protect resources
+according to their needs.
+
+Use Quarkus security annotations such as:
+
+- `@Authenticated` when any authenticated user may access the endpoint.
+- `@RolesAllowed` when access depends on one or more roles.
+- `@PermitAll` when an endpoint should intentionally remain public.
+
+Example request when an endpoint is protected:
 
 ```http
 Authorization: Bearer <access-token>
