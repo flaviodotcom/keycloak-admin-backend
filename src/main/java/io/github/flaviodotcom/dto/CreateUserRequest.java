@@ -1,6 +1,8 @@
 package io.github.flaviodotcom.dto;
 
+import io.github.flaviodotcom.config.validators.ValidAttributes;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
@@ -9,13 +11,15 @@ import java.util.Map;
 public record CreateUserRequest(
         @NotBlank(message = "{validation.username.required}")
         String username,
+        @Email(message = "{validation.email.invalid}")
         String email,
         String firstName,
         String lastName,
         Boolean enabled,
         Boolean emailVerified,
+        @ValidAttributes
         Map<String, List<String>> attributes,
-        List<String> groupIds
+        List<@NotBlank(message = "{validation.group-id.required}") String> groupIds
 ) {
 
     public CreateUserRequest {

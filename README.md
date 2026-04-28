@@ -529,6 +529,11 @@ GET /v1/users?size=500
 GET /v1/users?sort=random
 ```
 
+Request DTO validation also rejects invalid emails, blank `groupIds`, blank
+attribute names, empty attribute value lists and blank attribute values.
+`attributes: {}` is valid and means no attributes for create/update operations
+or explicit attribute clearing for `PATCH`.
+
 ## Internationalization
 
 The API localizes error titles, details and validation messages using the

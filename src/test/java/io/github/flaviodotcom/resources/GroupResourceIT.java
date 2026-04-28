@@ -74,6 +74,26 @@ class GroupResourceIT {
     }
 
     @Test
+    void givenBlankAttributeValue_WhenCreateGroup_ThenReturnValidationProblem() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "name": "Operations",
+                          "attributes": {
+                            "state": [""]
+                          }
+                        }
+                        """)
+                .when()
+                .post("/v1/groups")
+                .then()
+                .statusCode(400)
+                .body("messages[0].name", equalTo("attributes"))
+                .body("messages[0].message", equalTo("attribute value is required"));
+    }
+
+    @Test
     void givenId_WhenFindGroupById_ThenReturnGroup() {
         when(this.identityGroupGateway.findGroupById("group-1")).thenReturn(
                 new IdentityGroup("group-1", "Backoffice", "/Backoffice", Map.of("state", List.of("RJ")))

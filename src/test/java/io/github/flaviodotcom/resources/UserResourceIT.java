@@ -223,6 +223,78 @@ class UserResourceIT {
     }
 
     @Test
+    void givenInvalidEmail_WhenCreateUser_ThenReturnValidationProblem() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "username": "john",
+                          "email": "invalid-email"
+                        }
+                        """)
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("messages[0].name", equalTo("email"))
+                .body("messages[0].message", equalTo("email must be valid"));
+    }
+
+    @Test
+    void givenInvalidEmail_WhenPatchUser_ThenReturnValidationProblem() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "email": "invalid-email"
+                        }
+                        """)
+                .when()
+                .patch("/v1/users/user-1")
+                .then()
+                .statusCode(400)
+                .body("messages[0].name", equalTo("email"))
+                .body("messages[0].message", equalTo("email must be valid"));
+    }
+
+    @Test
+    void givenEmptyAttributeValues_WhenCreateUser_ThenReturnValidationProblem() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "username": "john",
+                          "attributes": {
+                            "cpf": []
+                          }
+                        }
+                        """)
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("messages[0].name", equalTo("attributes"))
+                .body("messages[0].message", equalTo("attribute values cannot be empty"));
+    }
+
+    @Test
+    void givenBlankGroupId_WhenCreateUser_ThenReturnValidationProblem() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "username": "john",
+                          "groupIds": [""]
+                        }
+                        """)
+                .when()
+                .post("/v1/users")
+                .then()
+                .statusCode(400)
+                .body("messages[0].message", equalTo("groupId is required"));
+    }
+
+    @Test
     void givenBusinessException_WhenFindUsers_ThenReturnUnprocessableEntityProblem() {
         when(this.identityUserGateway.findUsers(any(UserSearchCriteria.class)))
                 .thenThrow(new BusinessException("User rule failed."));
