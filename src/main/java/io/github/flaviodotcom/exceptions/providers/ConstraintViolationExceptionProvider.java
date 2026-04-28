@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.exceptions.providers;
 
 import io.github.flaviodotcom.exceptions.ExceptionLogger;
-import io.github.flaviodotcom.exceptions.Problem;
-import io.github.flaviodotcom.exceptions.ProblemBuilder;
+import io.github.flaviodotcom.dto.error.Problem;
+import io.github.flaviodotcom.dto.error.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
 import io.github.flaviodotcom.i18n.Messages;
 import jakarta.validation.ConstraintViolationException;

@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.dto.CreateUserAttributeRequest;
+import io.github.flaviodotcom.dto.userattribute.CreateUserAttributeRequest;
 import io.github.flaviodotcom.service.UserAttributeService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.POST;

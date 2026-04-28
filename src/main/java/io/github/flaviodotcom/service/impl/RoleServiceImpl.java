@@ -2,13 +2,13 @@ package io.github.flaviodotcom.service.impl;
 
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
-import io.github.flaviodotcom.dto.CreateRoleRequest;
+import io.github.flaviodotcom.dto.role.CreateRoleRequest;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
-import io.github.flaviodotcom.dto.RoleResponse;
-import io.github.flaviodotcom.dto.UpdateRoleRequest;
+import io.github.flaviodotcom.dto.role.RoleResponse;
+import io.github.flaviodotcom.dto.role.UpdateRoleRequest;
 import io.github.flaviodotcom.service.RoleService;
-import io.github.flaviodotcom.service.pagination.IdentitySortComparators;
+import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 

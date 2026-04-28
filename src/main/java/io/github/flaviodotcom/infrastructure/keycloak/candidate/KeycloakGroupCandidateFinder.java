@@ -8,8 +8,8 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.MAX_RESULTS;
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.MAX_RESULTS;
 
 @ApplicationScoped
 @AllArgsConstructor

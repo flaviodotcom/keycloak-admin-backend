@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class KeycloakIdentityMembershipGatewayTest {
@@ -68,11 +69,12 @@ class KeycloakIdentityMembershipGatewayTest {
 
         when(keycloak.groups()).thenReturn(groupsResource);
         when(groupsResource.group("group-1")).thenReturn(groupResource);
-        when(groupResource.members()).thenReturn(List.of(user("user-1", "john")));
+        when(groupResource.members(0, Integer.MAX_VALUE)).thenReturn(List.of(user("user-1", "john")));
 
         var members = gateway.findGroupMembers("group-1");
 
         assertEquals("john", members.getFirst().username());
+        verify(groupResource).members(0, Integer.MAX_VALUE);
     }
 
     private KeycloakIdentityMembershipGateway gateway(KeycloakAdminSupport keycloak) {

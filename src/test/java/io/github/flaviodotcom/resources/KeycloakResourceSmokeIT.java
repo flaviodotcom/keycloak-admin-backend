@@ -5,11 +5,13 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.emptyOrNullString;
 
@@ -179,6 +181,84 @@ class KeycloakResourceSmokeIT {
                 .delete("/v1/groups/{id}", groupId)
                 .then()
                 .statusCode(204);
+    }
+
+    @Test
+    void givenKeycloakContainerAndGroupWithManyMembers_WhenFindGroupMembers_ThenReturnCompletePaginatedResult() {
+        var groupName = "it-members-group-" + RUN_ID;
+        var userIds = new ArrayList<String>();
+        String groupId = null;
+
+        try {
+            groupId = given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "name": "%s"
+                            }
+                            """.formatted(groupName))
+                    .when()
+                    .post("/v1/groups")
+                    .then()
+                    .statusCode(201)
+                    .body("id", not(emptyOrNullString()))
+                    .extract()
+                    .path("id");
+
+            for (var index = 0; index < 25; index++) {
+                var username = "it-member-%s-%02d".formatted(RUN_ID, index);
+                String userId = given()
+                        .contentType("application/json")
+                        .body("""
+                                {
+                                  "username": "%s",
+                                  "email": "%s@example.com",
+                                  "firstName": "Member",
+                                  "lastName": "%02d",
+                                  "enabled": true,
+                                  "emailVerified": false,
+                                  "groupIds": ["%s"]
+                                }
+                                """.formatted(username, username, index, groupId))
+                        .when()
+                        .post("/v1/users")
+                        .then()
+                        .statusCode(201)
+                        .body("id", not(emptyOrNullString()))
+                        .extract()
+                        .path("id");
+                userIds.add(userId);
+            }
+
+            given()
+                    .when()
+                    .get("/v1/groups/{id}/members?size=10&page=0&sortBy=username", groupId)
+                    .then()
+                    .statusCode(200)
+                    .body("content", hasSize(10))
+                    .body("totalElements", equalTo(25))
+                    .body("totalPages", equalTo(3));
+
+            given()
+                    .when()
+                    .get("/v1/groups/{id}/members?size=10&page=2&sortBy=username", groupId)
+                    .then()
+                    .statusCode(200)
+                    .body("content", hasSize(5))
+                    .body("totalElements", equalTo(25))
+                    .body("page", equalTo(2));
+        } finally {
+            for (var userId : userIds) {
+                given()
+                        .when()
+                        .delete("/v1/users/{id}", userId);
+            }
+            if (groupId != null) {
+                given()
+                        .when()
+                        .delete("/v1/groups/{id}", groupId);
+            }
+        }
     }
 
     @Test

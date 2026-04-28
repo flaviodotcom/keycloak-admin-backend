@@ -1,12 +1,12 @@
 package io.github.flaviodotcom.service;
 
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
-import io.github.flaviodotcom.dto.CreateGroupRequest;
-import io.github.flaviodotcom.dto.GroupResponse;
+import io.github.flaviodotcom.dto.group.CreateGroupRequest;
+import io.github.flaviodotcom.dto.group.GroupResponse;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
-import io.github.flaviodotcom.dto.UpdateGroupRequest;
-import io.github.flaviodotcom.dto.UserResponse;
+import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
+import io.github.flaviodotcom.dto.user.UserResponse;
 
 public interface GroupService {
 

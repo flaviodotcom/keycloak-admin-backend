@@ -14,7 +14,7 @@ import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLoc
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakErrorContext;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
@@ -35,9 +35,10 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     @Override
     public List<IdentityUser> findUsers(UserSearchCriteria criteria) {
         try {
-            return this.candidateFinder.findCandidates(criteria).stream()
+            var attributeDefinitions = this.attributeIndex.definitionsFor(criteria.attributes().keySet());
+            return this.candidateFinder.findCandidates(criteria, attributeDefinitions).stream()
                     .map(this.mapper::toIdentityUser)
-                    .filter(user -> this.matcher.matches(user, criteria))
+                    .filter(user -> this.matcher.matches(user, criteria, attributeDefinitions))
                     .toList();
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());

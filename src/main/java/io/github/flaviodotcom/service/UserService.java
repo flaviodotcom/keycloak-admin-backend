@@ -1,13 +1,13 @@
 package io.github.flaviodotcom.service;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
-import io.github.flaviodotcom.dto.CreateUserRequest;
-import io.github.flaviodotcom.dto.PatchUserRequest;
+import io.github.flaviodotcom.dto.user.CreateUserRequest;
+import io.github.flaviodotcom.dto.user.PatchUserRequest;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
-import io.github.flaviodotcom.dto.UpdateUserRequest;
-import io.github.flaviodotcom.dto.UserResponse;
-import io.github.flaviodotcom.dto.UserResponseOptions;
+import io.github.flaviodotcom.dto.user.UpdateUserRequest;
+import io.github.flaviodotcom.dto.user.UserResponse;
+import io.github.flaviodotcom.dto.user.UserResponseOptions;
 
 public interface UserService {
 

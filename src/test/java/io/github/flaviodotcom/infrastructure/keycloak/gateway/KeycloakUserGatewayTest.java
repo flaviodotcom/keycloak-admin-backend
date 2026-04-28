@@ -11,7 +11,7 @@ import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCand
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatcher;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeIndex;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -71,13 +72,8 @@ class KeycloakUserGatewayTest {
         maria.setAttributes(Map.of("departamento", List.of("Recursos Humanos")));
 
         when(keycloak.users()).thenReturn(usersResource);
-        when(attributeGateway.findAttribute("departamento")).thenReturn(new IdentityUserAttribute(
-                "departamento",
-                Map.of(),
-                true,
-                false,
-                false
-        ));
+        when(attributeGateway.findAttributes(Set.of("departamento")))
+                .thenReturn(attributes("departamento", true));
         when(usersResource.searchByAttributes("__search_departamento:recursos humanos", false)).thenReturn(List.of(maria));
 
         var users = gateway.findUsers(new UserSearchCriteria(
@@ -105,13 +101,8 @@ class KeycloakUserGatewayTest {
         user.setAttributes(Map.of("cpf", List.of("12345678903")));
 
         when(keycloak.users()).thenReturn(usersResource);
-        when(attributeGateway.findAttribute("cpf")).thenReturn(new IdentityUserAttribute(
-                "cpf",
-                Map.of(),
-                false,
-                false,
-                false
-        ));
+        when(attributeGateway.findAttributes(Set.of("cpf")))
+                .thenReturn(attributes("cpf", false));
         when(usersResource.searchByAttributes("cpf:12345678903", false)).thenReturn(List.of(user));
 
         var users = gateway.findUsers(new UserSearchCriteria(
@@ -307,13 +298,8 @@ class KeycloakUserGatewayTest {
 
         when(keycloak.users()).thenReturn(usersResource);
         when(usersResource.get("user-1")).thenReturn(userResource);
-        when(attributeGateway.findAttribute("name")).thenReturn(new IdentityUserAttribute(
-                "name",
-                Map.of(),
-                true,
-                false,
-                false
-        ));
+        when(attributeGateway.findAttributes(Set.of("name")))
+                .thenReturn(attributes("name", true));
         when(userResource.toRepresentation()).thenReturn(updatedUser);
 
         var user = gateway.updateUser("user-1", new UpdateIdentityUserCommand(
@@ -418,13 +404,8 @@ class KeycloakUserGatewayTest {
 
         when(keycloak.users()).thenReturn(usersResource);
         when(usersResource.get("user-1")).thenReturn(userResource);
-        when(attributeGateway.findAttribute("name")).thenReturn(new IdentityUserAttribute(
-                "name",
-                Map.of(),
-                true,
-                false,
-                false
-        ));
+        when(attributeGateway.findAttributes(Set.of("name")))
+                .thenReturn(attributes("name", true));
         when(userResource.toRepresentation()).thenReturn(currentUser, updatedUser);
 
         var user = gateway.patchUser("user-1", new PatchIdentityUserCommand(
@@ -469,6 +450,10 @@ class KeycloakUserGatewayTest {
                 attributeIndex,
                 postCreationGateway
         );
+    }
+
+    private Map<String, IdentityUserAttribute> attributes(String name, boolean insensitive) {
+        return Map.of(name, new IdentityUserAttribute(name, Map.of(), insensitive, false, false));
     }
 
     private UserRepresentation user(

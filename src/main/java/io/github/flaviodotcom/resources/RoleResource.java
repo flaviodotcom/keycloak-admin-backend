@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.dto.CreateRoleRequest;
-import io.github.flaviodotcom.dto.UpdateRoleRequest;
-import io.github.flaviodotcom.resources.support.QueryCriteriaMapper;
+import io.github.flaviodotcom.dto.role.CreateRoleRequest;
+import io.github.flaviodotcom.dto.role.UpdateRoleRequest;
+import io.github.flaviodotcom.resources.query.RoleQueryCriteriaMapper;
 import io.github.flaviodotcom.service.RoleService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
@@ -22,14 +22,14 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 public class RoleResource {
 
     private final RoleService roleService;
-    private final QueryCriteriaMapper queryCriteriaMapper;
+    private final RoleQueryCriteriaMapper queryCriteriaMapper;
 
     @GET
     @Operation(summary = "Find roles by filters")
     public Response findRoles(@Context UriInfo uriInfo) {
         return Response.ok(this.roleService.findRoles(
-                this.queryCriteriaMapper.toRoleCriteria(uriInfo),
-                this.queryCriteriaMapper.toRolePageRequest(uriInfo)
+                this.queryCriteriaMapper.toCriteria(uriInfo),
+                this.queryCriteriaMapper.toPageRequest(uriInfo)
         )).build();
     }
 

@@ -4,7 +4,8 @@ import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.shared.SearchTermBuilder;
 import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeIndex;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeDefinitions;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeIndex;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -15,8 +16,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.FIRST_RESULT;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakQueryDefaults.MAX_RESULTS;
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.MAX_RESULTS;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -25,10 +26,11 @@ public class KeycloakUserCandidateFinder {
     private final KeycloakAdminSupport keycloak;
     private final KeycloakUserAttributeIndex attributeIndex;
 
-    public List<UserRepresentation> findCandidates(UserSearchCriteria criteria) {
+    public List<UserRepresentation> findCandidates(UserSearchCriteria criteria,
+                                                   KeycloakUserAttributeDefinitions attributeDefinitions) {
         if (criteria.hasAttributeFilters()) {
             return this.keycloak.users().searchByAttributes(
-                    this.toAttributeQuery(this.attributeIndex.toSearchAttributes(criteria.attributes())),
+                    this.toAttributeQuery(this.attributeIndex.toSearchAttributes(criteria.attributes(), attributeDefinitions)),
                     criteria.exact()
             );
         }

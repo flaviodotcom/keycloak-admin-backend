@@ -32,7 +32,7 @@ application.
 
 ## Tech Stack
 
-- Java 25
+- Java 21
 - Quarkus 3.34.6
 - Maven Wrapper
 - Keycloak Admin REST Client
@@ -49,12 +49,13 @@ The project follows a simple layered architecture:
 
 ```text
 resources/                 HTTP resources and request entry points
-resources/support/         URI/query parameter mapping
+resources/query/           URI/query parameter mapping by API context
 service/                   Application use cases
 domain/identity/           Domain models, commands, criteria and gateway ports
+domain/identity/pagination Shared identity sorting rules
 domain/shared/             Shared domain helpers, such as text matching
 infrastructure/keycloak/   Keycloak gateway implementations and mappers
-dto/                       Public request and response DTOs
+dto/                       Public request and response DTOs grouped by context
 exceptions/                Problem response handling
 i18n/                      Locale resolution and message bundle access
 health/                    Liveness and readiness checks
@@ -66,9 +67,20 @@ Client classes. This keeps the HTTP/API layer readable and makes it easier to ad
 new use cases later, such as role assignments, password actions, or more User
 Profile operations.
 
+DTOs are organized by API context (`dto.user`, `dto.group`, `dto.role`,
+`dto.userattribute`, `dto.pagination` and `dto.error`) to keep the public API
+contract easy to navigate as the backend grows. Query parameter mapping follows
+the same idea under `resources/query`, with resource-specific mappers sharing a
+small common reader.
+
+Keycloak support code is split into focused subpackages. User Profile attribute
+metadata and indexing live in `infrastructure/keycloak/userprofile`, while
+Keycloak paging defaults live in `infrastructure/keycloak/pagination`.
+
 ## Requirements
 
-- JDK 21 or newer.
+- JDK 21 or newer. The project is compiled with Maven `release 21`, so newer
+  JDKs may be used as long as they can target Java 21 bytecode.
 - A running Keycloak server.
 - A Keycloak realm configured for this backend.
 - A confidential Keycloak client with enough service account permissions to
@@ -766,7 +778,7 @@ When contributing:
 - Keep Keycloak-specific logic inside `infrastructure/keycloak`.
 - Prefer domain gateway interfaces over direct Keycloak Admin Client usage in
   services or resources.
-- Keep request parsing and query validation in `resources/support`.
+- Keep request parsing and query validation in `resources/query`.
 - Add tests for new API behavior and error mapping.
 - Add new error messages to `messages.properties` and all supported locale files.
 - Add new validation messages to `ValidationMessages.properties` and all

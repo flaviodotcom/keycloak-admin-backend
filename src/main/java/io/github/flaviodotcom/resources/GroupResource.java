@@ -1,8 +1,8 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.dto.CreateGroupRequest;
-import io.github.flaviodotcom.dto.UpdateGroupRequest;
-import io.github.flaviodotcom.resources.support.QueryCriteriaMapper;
+import io.github.flaviodotcom.dto.group.CreateGroupRequest;
+import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
+import io.github.flaviodotcom.resources.query.GroupQueryCriteriaMapper;
 import io.github.flaviodotcom.service.GroupService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
@@ -22,14 +22,14 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 public class GroupResource {
 
     private final GroupService groupService;
-    private final QueryCriteriaMapper queryCriteriaMapper;
+    private final GroupQueryCriteriaMapper queryCriteriaMapper;
 
     @GET
     @Operation(summary = "Find groups by filters")
     public Response findGroups(@Context UriInfo uriInfo) {
         return Response.ok(this.groupService.findGroups(
-                this.queryCriteriaMapper.toGroupCriteria(uriInfo),
-                this.queryCriteriaMapper.toGroupPageRequest(uriInfo)
+                this.queryCriteriaMapper.toCriteria(uriInfo),
+                this.queryCriteriaMapper.toPageRequest(uriInfo)
         )).build();
     }
 
@@ -46,7 +46,7 @@ public class GroupResource {
     public Response findGroupMembers(@PathParam("id") String id, @Context UriInfo uriInfo) {
         return Response.ok(this.groupService.findGroupMembers(
                 id,
-                this.queryCriteriaMapper.toGroupMembersPageRequest(uriInfo)
+                this.queryCriteriaMapper.toMembersPageRequest(uriInfo)
         )).build();
     }
 

@@ -7,15 +7,18 @@ import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfileAttributeMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeDefinitionResolver;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeLocalization;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeDefinitionResolver;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeLocalization;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.userprofile.config.UPConfig;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -50,6 +53,20 @@ public class KeycloakUserAttributeGateway implements IdentityUserAttributeGatewa
         try {
             var config = this.keycloak.userProfile().getConfiguration();
             return this.definitionResolver.resolve(config, name);
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public Map<String, IdentityUserAttribute> findAttributes(Set<String> names) {
+        try {
+            var config = this.keycloak.userProfile().getConfiguration();
+            var attributes = new LinkedHashMap<String, IdentityUserAttribute>();
+            for (var name : names) {
+                attributes.put(name, this.definitionResolver.resolve(config, name));
+            }
+            return Map.copyOf(attributes);
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
         }

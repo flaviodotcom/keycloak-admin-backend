@@ -15,6 +15,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.FIRST_RESULT;
+import static io.github.flaviodotcom.infrastructure.keycloak.pagination.KeycloakQueryDefaults.MAX_RESULTS;
+
 @ApplicationScoped
 @AllArgsConstructor
 public class KeycloakIdentityMembershipGateway implements IdentityMembershipGateway {
@@ -48,7 +51,7 @@ public class KeycloakIdentityMembershipGateway implements IdentityMembershipGate
     @Override
     public List<IdentityUser> findGroupMembers(String groupId) {
         try {
-            return this.keycloak.groups().group(groupId).members().stream()
+            return this.keycloak.groups().group(groupId).members(FIRST_RESULT, MAX_RESULTS).stream()
                     .map(this.mapper::toIdentityUser)
                     .toList();
         } catch (WebApplicationException exception) {

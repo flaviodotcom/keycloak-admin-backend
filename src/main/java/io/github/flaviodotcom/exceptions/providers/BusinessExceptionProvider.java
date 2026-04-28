@@ -3,7 +3,7 @@ package io.github.flaviodotcom.exceptions.providers;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.exceptions.ExceptionLogger;
 import io.github.flaviodotcom.exceptions.LocalizedMessage;
-import io.github.flaviodotcom.exceptions.ProblemBuilder;
+import io.github.flaviodotcom.dto.error.ProblemBuilder;
 import io.github.flaviodotcom.i18n.HttpLocaleResolver;
 import io.github.flaviodotcom.i18n.Messages;
 import jakarta.ws.rs.core.Context;

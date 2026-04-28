@@ -4,7 +4,7 @@ import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttribut
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
 import io.github.flaviodotcom.exceptions.BusinessException;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeLocalization;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeLocalization;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.userprofile.config.UPAttribute;
@@ -14,11 +14,11 @@ import org.keycloak.representations.userprofile.config.UPAttributeRequired;
 import java.util.Map;
 import java.util.Set;
 
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeMetadata.ADMIN_ONLY_ROLE;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeMetadata.ADMIN_USER_ROLES;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeMetadata.INSENSITIVE_ANNOTATION;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeMetadata.INTERNAL_ANNOTATION;
-import static io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeMetadata.SOURCE_ATTRIBUTE_ANNOTATION;
+import static io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeMetadata.ADMIN_ONLY_ROLE;
+import static io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeMetadata.ADMIN_USER_ROLES;
+import static io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeMetadata.INSENSITIVE_ANNOTATION;
+import static io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeMetadata.INTERNAL_ANNOTATION;
+import static io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeMetadata.SOURCE_ATTRIBUTE_ANNOTATION;
 
 @ApplicationScoped
 @AllArgsConstructor

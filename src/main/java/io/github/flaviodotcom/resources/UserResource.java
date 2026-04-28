@@ -1,9 +1,9 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.dto.CreateUserRequest;
-import io.github.flaviodotcom.dto.PatchUserRequest;
-import io.github.flaviodotcom.dto.UpdateUserRequest;
-import io.github.flaviodotcom.resources.support.QueryCriteriaMapper;
+import io.github.flaviodotcom.dto.user.CreateUserRequest;
+import io.github.flaviodotcom.dto.user.PatchUserRequest;
+import io.github.flaviodotcom.dto.user.UpdateUserRequest;
+import io.github.flaviodotcom.resources.query.UserQueryCriteriaMapper;
 import io.github.flaviodotcom.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
@@ -24,15 +24,15 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 public class UserResource {
 
     private final UserService userService;
-    private final QueryCriteriaMapper queryCriteriaMapper;
+    private final UserQueryCriteriaMapper queryCriteriaMapper;
 
     @GET
     @Operation(summary = "Find users by filters")
     public Response findUsers(@Context UriInfo uriInfo) {
         return Response.ok(this.userService.findUsers(
-                this.queryCriteriaMapper.toUserCriteria(uriInfo),
-                this.queryCriteriaMapper.toUserResponseOptions(uriInfo),
-                this.queryCriteriaMapper.toUserPageRequest(uriInfo)
+                this.queryCriteriaMapper.toCriteria(uriInfo),
+                this.queryCriteriaMapper.toResponseOptions(uriInfo),
+                this.queryCriteriaMapper.toPageRequest(uriInfo)
         )).build();
     }
 
@@ -40,7 +40,7 @@ public class UserResource {
     @Path("{id}")
     @Operation(summary = "Find a user by id")
     public Response findUserById(@PathParam("id") String id, @Context UriInfo uriInfo) {
-        return Response.ok(this.userService.findUserById(id, this.queryCriteriaMapper.toUserResponseOptions(uriInfo))).build();
+        return Response.ok(this.userService.findUserById(id, this.queryCriteriaMapper.toResponseOptions(uriInfo))).build();
     }
 
     @POST

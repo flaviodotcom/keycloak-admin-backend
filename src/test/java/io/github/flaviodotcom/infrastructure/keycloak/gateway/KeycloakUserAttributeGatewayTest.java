@@ -4,8 +4,8 @@ import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttribut
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfileAttributeMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeDefinitionResolver;
-import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeLocalization;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeDefinitionResolver;
+import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeLocalization;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.RealmLocalizationResource;
@@ -16,6 +16,7 @@ import org.keycloak.representations.userprofile.config.UPConfig;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doThrow;
@@ -133,6 +134,25 @@ class KeycloakUserAttributeGatewayTest {
         when(userProfile.getConfiguration()).thenReturn(config);
 
         assertThrows(BusinessException.class, () -> gateway.findAttribute("cpf"));
+    }
+
+    @Test
+    void givenAttributeNames_WhenFindAttributes_ThenLoadUserProfileConfigurationOnce() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var userProfile = mock(UserProfileResource.class);
+        var config = new UPConfig();
+        config.setAttributes(new ArrayList<>());
+        config.addOrReplaceAttribute(new UPAttribute("cpf"));
+        config.addOrReplaceAttribute(new UPAttribute("departamento"));
+        var gateway = newGateway(keycloak);
+
+        when(keycloak.userProfile()).thenReturn(userProfile);
+        when(userProfile.getConfiguration()).thenReturn(config);
+
+        var attributes = gateway.findAttributes(Set.of("cpf", "departamento"));
+
+        assertEquals(Set.of("cpf", "departamento"), attributes.keySet());
+        verify(userProfile).getConfiguration();
     }
 
     private static KeycloakUserAttributeGateway newGateway(KeycloakAdminSupport keycloak) {
