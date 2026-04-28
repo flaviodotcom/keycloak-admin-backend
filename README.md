@@ -33,6 +33,8 @@ application.
 - Attribute search support using `attr.<name>` query parameters.
 - Localized error responses using `Accept-Language`.
 - Centralized translation of common Keycloak errors into clearer API problems.
+- Keycloak call protection with timeout, circuit breaker and bulkhead.
+- Short-lived caches for User Profile attribute metadata and Keycloak client UUIDs.
 
 ## Tech Stack
 
@@ -44,6 +46,8 @@ application.
 - Hibernate Validator
 - SmallRye OpenAPI
 - SmallRye Health
+- SmallRye Fault Tolerance
+- Quarkus Cache
 - Lombok
 - JUnit, Mockito and REST Assured
 
@@ -59,6 +63,10 @@ domain/identity/           Domain models, commands, criteria and gateway ports
 domain/identity/pagination Shared identity sorting rules
 domain/shared/             Shared domain helpers, such as text matching
 infrastructure/keycloak/   Keycloak gateway implementations and mappers
+infrastructure/keycloak/cache
+                           Keycloak lookup caches
+infrastructure/keycloak/resilience
+                           Timeout, circuit breaker and bulkhead execution boundary
 dto/                       Public request and response DTOs grouped by context
 exceptions/                Problem response handling
 i18n/                      Locale resolution and message bundle access
@@ -115,6 +123,18 @@ Keycloak configuration can be supplied through environment variables:
 For real environments, provide secrets through environment variables or your
 deployment secret manager. Do not rely on local development values.
 
+Keycloak lookup cache defaults:
+
+```properties
+quarkus.cache.caffeine."keycloak-user-attributes".expire-after-write=60S
+quarkus.cache.caffeine."keycloak-client-uuids".expire-after-write=300S
+```
+
+The User Profile attribute cache is invalidated when this backend creates,
+updates or deletes managed attributes. Client UUIDs are cached for a short time
+because role assignment needs Keycloak's internal client UUID, while the public
+API receives the client id.
+
 ## Running Locally
 
 Start Keycloak first, then run the application:
@@ -153,6 +173,27 @@ The liveness check only reports whether the application process is alive. The
 readiness check validates basic Keycloak connectivity by reading the configured
 realm representation. If Keycloak is unavailable or the admin client cannot
 access the realm, readiness fails and the pod should not receive traffic.
+
+## Keycloak Resilience
+
+All Keycloak gateway operations go through a small resilience boundary:
+
+- read operations use timeout, circuit breaker, bulkhead and one retry for
+  transient failures;
+- write operations use timeout, circuit breaker and bulkhead, but do not retry;
+- readiness uses a short independent timeout and bulkhead so Kubernetes probes
+  do not affect the main business-call circuit.
+
+The backend does not use fallback responses. If Keycloak times out, the circuit
+is open, or the bulkhead rejects a request, the error propagates through the
+centralized exception handling flow and returns a localized problem response.
+
+Typical responses are:
+
+- `504 Gateway Timeout` when Keycloak does not answer within the configured
+  timeout.
+- `503 Service Unavailable` when the circuit is open, Keycloak is overloaded, or
+  the fault-tolerance layer rejects the call.
 
 ## Authentication
 

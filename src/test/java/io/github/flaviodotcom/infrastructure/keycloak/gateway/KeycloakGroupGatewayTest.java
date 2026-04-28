@@ -6,6 +6,7 @@ import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakGroupCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakGroupMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.GroupResource;
@@ -121,7 +122,8 @@ class KeycloakGroupGatewayTest {
                 keycloak,
                 new KeycloakGroupCandidateFinder(keycloak),
                 new KeycloakRepresentationMapper(),
-                new KeycloakGroupMatcher()
+                new KeycloakGroupMatcher(),
+                new KeycloakResilienceExecutor()
         );
     }
 }

@@ -1,7 +1,8 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
-import io.github.flaviodotcom.exceptions.BusinessException;
+import io.github.flaviodotcom.infrastructure.keycloak.cache.KeycloakClientCatalog;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,6 +18,8 @@ import java.util.List;
 public class KeycloakRoleAssignmentGateway implements IdentityRoleAssignmentGateway {
 
     private final KeycloakAdminSupport keycloak;
+    private final KeycloakClientCatalog clientCatalog;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
     public void assignRealmRoleToUser(String userId, String roleName) {
@@ -87,23 +90,17 @@ public class KeycloakRoleAssignmentGateway implements IdentityRoleAssignmentGate
     }
 
     private String clientUuid(String clientId) {
-        var clients = this.keycloak.realm().clients().findByClientId(clientId);
-        if (clients.isEmpty()) {
-            throw BusinessException.localized("error.keycloak.client.not-found", clientId);
-        }
-        if (clients.size() > 1) {
-            throw BusinessException.localized("error.keycloak.client.ambiguous", clientId);
-        }
-
-        return clients.getFirst().getId();
+        return this.clientCatalog.findClientUuid(clientId);
     }
 
     private void execute(KeycloakOperation operation) {
-        try {
-            operation.run();
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                operation.run();
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     private record KeycloakClientRole(String clientUuid, RoleRepresentation representation) {

@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakErrorContext;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
@@ -17,16 +18,19 @@ public class KeycloakUserActionGateway implements IdentityUserActionGateway {
     private static final String UPDATE_PASSWORD_ACTION = "UPDATE_PASSWORD";
 
     private final KeycloakAdminSupport keycloak;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
     public void sendUpdatePasswordEmail(String userId) {
-        try {
-            this.keycloak.users().get(userId).executeActionsEmail(List.of(UPDATE_PASSWORD_ACTION));
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(
-                    exception.getResponse(),
-                    KeycloakErrorContext.UPDATE_PASSWORD_EMAIL
-            );
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                this.keycloak.users().get(userId).executeActionsEmail(List.of(UPDATE_PASSWORD_ACTION));
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(
+                        exception.getResponse(),
+                        KeycloakErrorContext.UPDATE_PASSWORD_EMAIL
+                );
+            }
+        });
     }
 }

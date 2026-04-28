@@ -4,6 +4,7 @@ import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttribut
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserAttributeCommand;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfileAttributeMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeDefinitionResolver;
 import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeLocalization;
@@ -221,6 +222,12 @@ class KeycloakUserAttributeGatewayTest {
                                                            KeycloakUserAttributeLocalization localization) {
         var mapper = new KeycloakUserProfileAttributeMapper(localization);
         var definitionResolver = new KeycloakUserAttributeDefinitionResolver(mapper);
-        return new KeycloakUserAttributeGateway(keycloak, mapper, definitionResolver, localization);
+        return new KeycloakUserAttributeGateway(
+                keycloak,
+                mapper,
+                definitionResolver,
+                localization,
+                new KeycloakResilienceExecutor()
+        );
     }
 }

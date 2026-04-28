@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class KeycloakUserActionGatewayTest {
         var keycloak = mock(KeycloakAdminSupport.class);
         var usersResource = mock(UsersResource.class);
         var userResource = mock(UserResource.class);
-        var gateway = new KeycloakUserActionGateway(keycloak);
+        var gateway = new KeycloakUserActionGateway(keycloak, new KeycloakResilienceExecutor());
 
         when(keycloak.users()).thenReturn(usersResource);
         when(usersResource.get("user-1")).thenReturn(userResource);
@@ -39,7 +40,7 @@ class KeycloakUserActionGatewayTest {
         var keycloak = mock(KeycloakAdminSupport.class);
         var usersResource = mock(UsersResource.class);
         var userResource = mock(UserResource.class);
-        var gateway = new KeycloakUserActionGateway(keycloak);
+        var gateway = new KeycloakUserActionGateway(keycloak, new KeycloakResilienceExecutor());
 
         when(keycloak.users()).thenReturn(usersResource);
         when(usersResource.get("user-1")).thenReturn(userResource);

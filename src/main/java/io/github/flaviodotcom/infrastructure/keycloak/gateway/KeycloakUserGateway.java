@@ -10,6 +10,7 @@ import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.CreatedResourceLocation;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakErrorContext;
@@ -31,85 +32,98 @@ public class KeycloakUserGateway implements IdentityUserGateway {
     private final KeycloakUserMatcher matcher;
     private final KeycloakUserAttributeIndex attributeIndex;
     private final IdentityUserPostCreationGateway postCreationGateway;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
     public List<IdentityUser> findUsers(UserSearchCriteria criteria) {
-        try {
-            var attributeDefinitions = this.attributeIndex.definitionsFor(criteria.attributes().keySet());
-            return this.candidateFinder.findCandidates(criteria, attributeDefinitions).stream()
-                    .map(this.mapper::toIdentityUser)
-                    .filter(user -> this.matcher.matches(user, criteria, attributeDefinitions))
-                    .toList();
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeRead(() -> {
+            try {
+                var attributeDefinitions = this.attributeIndex.definitionsFor(criteria.attributes().keySet());
+                return this.candidateFinder.findCandidates(criteria, attributeDefinitions).stream()
+                        .map(this.mapper::toIdentityUser)
+                        .filter(user -> this.matcher.matches(user, criteria, attributeDefinitions))
+                        .toList();
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityUser findUserById(String id) {
-        try {
-            return this.mapper.toIdentityUser(this.keycloak.users().get(id).toRepresentation());
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeRead(() -> {
+            try {
+                return this.mapper.toIdentityUser(this.keycloak.users().get(id).toRepresentation());
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityUser createUser(CreateIdentityUserCommand command) {
-        try {
-            var userRepresentation = this.mapper.toUserRepresentation(
-                    command.withAttributes(this.attributeIndex.index(command.attributes()))
-            );
+        return this.resilience.executeWrite(() -> {
+            try {
+                var userRepresentation = this.mapper.toUserRepresentation(
+                        command.withAttributes(this.attributeIndex.index(command.attributes()))
+                );
 
-            try (var response = this.keycloak.users().create(userRepresentation)) {
-                KeycloakHttpResponseHandler.ensureCreated(response, KeycloakErrorContext.USER_CREATION);
-                var userId = CreatedResourceLocation.extractId(response);
-                this.assignGroupsOrRemoveUser(userId, command.groupIds());
-                return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
+                try (var response = this.keycloak.users().create(userRepresentation)) {
+                    KeycloakHttpResponseHandler.ensureCreated(response, KeycloakErrorContext.USER_CREATION);
+                    var userId = CreatedResourceLocation.extractId(response);
+                    this.assignGroupsOrRemoveUser(userId, command.groupIds());
+                    return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
+                }
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception, KeycloakErrorContext.USER_CREATION);
             }
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception, KeycloakErrorContext.USER_CREATION);
-        }
+        });
     }
 
     @Override
     public IdentityUser updateUser(String id, UpdateIdentityUserCommand command) {
-        try {
-            var userResource = this.keycloak.users().get(id);
-            var userRepresentation = this.mapper.toUserRepresentation(
-                    id,
-                    command.withAttributes(this.attributeIndex.index(command.attributes()))
-            );
-            userResource.update(userRepresentation);
-            return this.mapper.toIdentityUser(userResource.toRepresentation());
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeWrite(() -> {
+            try {
+                var userResource = this.keycloak.users().get(id);
+                var userRepresentation = this.mapper.toUserRepresentation(
+                        id,
+                        command.withAttributes(this.attributeIndex.index(command.attributes()))
+                );
+                userResource.update(userRepresentation);
+                return this.mapper.toIdentityUser(userResource.toRepresentation());
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityUser patchUser(String id, PatchIdentityUserCommand command) {
-        try {
-            var userResource = this.keycloak.users().get(id);
-            var currentUser = userResource.toRepresentation();
-            var attributes = command.attributes() == null
-                    ? currentUser.getAttributes()
-                    : this.attributeIndex.index(command.attributes());
-            var userRepresentation = this.mapper.toUserRepresentation(id, currentUser, command, attributes);
-            userResource.update(userRepresentation);
-            return this.mapper.toIdentityUser(userResource.toRepresentation());
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeWrite(() -> {
+            try {
+                var userResource = this.keycloak.users().get(id);
+                var currentUser = userResource.toRepresentation();
+                var attributes = command.attributes() == null
+                        ? currentUser.getAttributes()
+                        : this.attributeIndex.index(command.attributes());
+                var userRepresentation = this.mapper.toUserRepresentation(id, currentUser, command, attributes);
+                userResource.update(userRepresentation);
+                return this.mapper.toIdentityUser(userResource.toRepresentation());
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public void deleteUser(String id) {
-        try {
-            this.keycloak.users().get(id).remove();
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                this.keycloak.users().get(id).remove();
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     private void assignGroupsOrRemoveUser(String userId, List<String> groupIds) {

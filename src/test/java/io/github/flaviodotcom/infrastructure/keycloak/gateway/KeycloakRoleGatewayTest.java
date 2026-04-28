@@ -5,6 +5,7 @@ import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakRoleCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakRoleMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import org.mockito.Mockito;
 import org.junit.jupiter.api.Test;
@@ -108,7 +109,8 @@ class KeycloakRoleGatewayTest {
                 keycloak,
                 new KeycloakRoleCandidateFinder(keycloak),
                 new KeycloakRepresentationMapper(),
-                new KeycloakRoleMatcher()
+                new KeycloakRoleMatcher(),
+                new KeycloakResilienceExecutor()
         );
     }
 }

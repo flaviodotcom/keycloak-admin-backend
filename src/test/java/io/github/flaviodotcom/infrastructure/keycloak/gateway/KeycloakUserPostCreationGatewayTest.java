@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -18,7 +19,7 @@ class KeycloakUserPostCreationGatewayTest {
         var keycloak = mock(KeycloakAdminSupport.class);
         var usersResource = mock(UsersResource.class);
         var userResource = mock(UserResource.class);
-        var gateway = new KeycloakUserPostCreationGateway(keycloak);
+        var gateway = new KeycloakUserPostCreationGateway(keycloak, new KeycloakResilienceExecutor());
 
         when(keycloak.users()).thenReturn(usersResource);
         when(usersResource.get("user-1")).thenReturn(userResource);

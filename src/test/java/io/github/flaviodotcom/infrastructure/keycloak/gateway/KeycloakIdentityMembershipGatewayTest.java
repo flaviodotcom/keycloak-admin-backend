@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.GroupResource;
@@ -108,7 +109,11 @@ class KeycloakIdentityMembershipGatewayTest {
     }
 
     private KeycloakIdentityMembershipGateway gateway(KeycloakAdminSupport keycloak) {
-        return new KeycloakIdentityMembershipGateway(keycloak, new KeycloakRepresentationMapper());
+        return new KeycloakIdentityMembershipGateway(
+                keycloak,
+                new KeycloakRepresentationMapper(),
+                new KeycloakResilienceExecutor()
+        );
     }
 
     private GroupRepresentation group(String id, String name, String path) {

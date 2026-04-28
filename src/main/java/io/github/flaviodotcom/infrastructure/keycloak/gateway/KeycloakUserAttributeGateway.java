@@ -5,11 +5,15 @@ import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserAttribut
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
+import io.github.flaviodotcom.infrastructure.keycloak.cache.KeycloakCacheNames;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfileAttributeMapper;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeDefinitionResolver;
 import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeLocalization;
+import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
@@ -30,85 +34,101 @@ public class KeycloakUserAttributeGateway implements IdentityUserAttributeGatewa
     private final KeycloakUserProfileAttributeMapper mapper;
     private final KeycloakUserAttributeDefinitionResolver definitionResolver;
     private final KeycloakUserAttributeLocalization localization;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
+    @CacheInvalidateAll(cacheName = KeycloakCacheNames.USER_ATTRIBUTES)
     public IdentityUserAttribute createAttribute(CreateIdentityUserAttributeCommand command) {
-        try {
-            var config = this.keycloak.userProfile().getConfiguration();
-            this.ensureMutableAttributes(config);
-            this.definitionResolver.ensureCanCreate(config, command.name());
-            config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
-            if (Boolean.TRUE.equals(command.insensitive())) {
-                config.addOrReplaceAttribute(this.mapper.toInternalAttribute(command));
-            }
+        return this.resilience.executeWrite(() -> {
+            try {
+                var config = this.keycloak.userProfile().getConfiguration();
+                this.ensureMutableAttributes(config);
+                this.definitionResolver.ensureCanCreate(config, command.name());
+                config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
+                if (Boolean.TRUE.equals(command.insensitive())) {
+                    config.addOrReplaceAttribute(this.mapper.toInternalAttribute(command));
+                }
 
-            this.keycloak.userProfile().update(config);
-            this.saveLocalizationOrRemoveAttribute(config, command);
-            return this.mapper.toIdentityUserAttribute(command);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+                this.keycloak.userProfile().update(config);
+                this.saveLocalizationOrRemoveAttribute(config, command);
+                return this.mapper.toIdentityUserAttribute(command);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
+    @CacheInvalidateAll(cacheName = KeycloakCacheNames.USER_ATTRIBUTES)
     public IdentityUserAttribute updateAttribute(UpdateIdentityUserAttributeCommand command) {
-        try {
-            var config = this.keycloak.userProfile().getConfiguration();
-            this.ensureMutableAttributes(config);
-            this.definitionResolver.resolve(config, command.name());
-            var originalAttributes = List.copyOf(config.getAttributes());
+        return this.resilience.executeWrite(() -> {
+            try {
+                var config = this.keycloak.userProfile().getConfiguration();
+                this.ensureMutableAttributes(config);
+                this.definitionResolver.resolve(config, command.name());
+                var originalAttributes = List.copyOf(config.getAttributes());
 
-            config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
-            if (Boolean.TRUE.equals(command.insensitive())) {
-                config.addOrReplaceAttribute(this.mapper.toInternalAttribute(command));
-            } else {
-                this.removeAttributes(config, SearchableAttributeName.toInternalName(command.name()));
+                config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
+                if (Boolean.TRUE.equals(command.insensitive())) {
+                    config.addOrReplaceAttribute(this.mapper.toInternalAttribute(command));
+                } else {
+                    this.removeAttributes(config, SearchableAttributeName.toInternalName(command.name()));
+                }
+
+                this.keycloak.userProfile().update(config);
+                this.saveLocalizationOrRestoreAttributes(config, originalAttributes, command);
+                return this.mapper.toIdentityUserAttribute(command);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
             }
-
-            this.keycloak.userProfile().update(config);
-            this.saveLocalizationOrRestoreAttributes(config, originalAttributes, command);
-            return this.mapper.toIdentityUserAttribute(command);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        });
     }
 
     @Override
+    @CacheInvalidateAll(cacheName = KeycloakCacheNames.USER_ATTRIBUTES)
     public void deleteAttribute(String name) {
-        try {
-            SearchableAttributeName.requirePublicName(name);
-            var config = this.keycloak.userProfile().getConfiguration();
-            this.ensureMutableAttributes(config);
-            this.definitionResolver.resolve(config, name);
-            this.removeAttributes(config, name, SearchableAttributeName.toInternalName(name));
-            this.keycloak.userProfile().update(config);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
-    }
-
-    @Override
-    public IdentityUserAttribute findAttribute(String name) {
-        try {
-            var config = this.keycloak.userProfile().getConfiguration();
-            return this.definitionResolver.resolve(config, name);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
-    }
-
-    @Override
-    public Map<String, IdentityUserAttribute> findAttributes(Set<String> names) {
-        try {
-            var config = this.keycloak.userProfile().getConfiguration();
-            var attributes = new LinkedHashMap<String, IdentityUserAttribute>();
-            for (var name : names) {
-                attributes.put(name, this.definitionResolver.resolve(config, name));
+        this.resilience.executeWrite(() -> {
+            try {
+                SearchableAttributeName.requirePublicName(name);
+                var config = this.keycloak.userProfile().getConfiguration();
+                this.ensureMutableAttributes(config);
+                this.definitionResolver.resolve(config, name);
+                this.removeAttributes(config, name, SearchableAttributeName.toInternalName(name));
+                this.keycloak.userProfile().update(config);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
             }
-            return Map.copyOf(attributes);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        });
+    }
+
+    @Override
+    @CacheResult(cacheName = KeycloakCacheNames.USER_ATTRIBUTES)
+    public IdentityUserAttribute findAttribute(String name) {
+        return this.resilience.executeRead(() -> {
+            try {
+                var config = this.keycloak.userProfile().getConfiguration();
+                return this.definitionResolver.resolve(config, name);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
+    }
+
+    @Override
+    @CacheResult(cacheName = KeycloakCacheNames.USER_ATTRIBUTES)
+    public Map<String, IdentityUserAttribute> findAttributes(Set<String> names) {
+        return this.resilience.executeRead(() -> {
+            try {
+                var config = this.keycloak.userProfile().getConfiguration();
+                var attributes = new LinkedHashMap<String, IdentityUserAttribute>();
+                for (var name : names) {
+                    attributes.put(name, this.definitionResolver.resolve(config, name));
+                }
+                return Map.copyOf(attributes);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     private void saveLocalizationOrRemoveAttribute(UPConfig config, CreateIdentityUserAttributeCommand command) {

@@ -10,6 +10,7 @@ import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakUserCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakUserMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.userprofile.KeycloakUserAttributeIndex;
 import org.junit.jupiter.api.Test;
@@ -448,7 +449,8 @@ class KeycloakUserGatewayTest {
                 new KeycloakRepresentationMapper(),
                 new KeycloakUserMatcher(attributeIndex),
                 attributeIndex,
-                postCreationGateway
+                postCreationGateway,
+                new KeycloakResilienceExecutor()
         );
     }
 

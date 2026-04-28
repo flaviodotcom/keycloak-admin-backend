@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.gateway.IdentityCredentialGateway;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,29 +16,34 @@ import java.util.List;
 public class KeycloakCredentialGateway implements IdentityCredentialGateway {
 
     private final KeycloakAdminSupport keycloak;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
     public void resetPassword(String userId, String value, boolean temporary) {
-        try {
-            var credential = new CredentialRepresentation();
-            credential.setType(CredentialRepresentation.PASSWORD);
-            credential.setValue(value);
-            credential.setTemporary(temporary);
-            this.keycloak.users().get(userId).resetPassword(credential);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                var credential = new CredentialRepresentation();
+                credential.setType(CredentialRepresentation.PASSWORD);
+                credential.setValue(value);
+                credential.setTemporary(temporary);
+                this.keycloak.users().get(userId).resetPassword(credential);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public void updateRequiredActions(String userId, List<String> actions) {
-        try {
-            var userResource = this.keycloak.users().get(userId);
-            var representation = userResource.toRepresentation();
-            representation.setRequiredActions(List.copyOf(actions));
-            userResource.update(representation);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                var userResource = this.keycloak.users().get(userId);
+                var representation = userResource.toRepresentation();
+                representation.setRequiredActions(List.copyOf(actions));
+                userResource.update(representation);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 }

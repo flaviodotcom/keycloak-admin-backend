@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.health;
 
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import jakarta.ws.rs.ProcessingException;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class KeycloakReadinessHealthCheckTest {
         when(keycloak.realm()).thenReturn(realm);
         when(realm.toRepresentation()).thenReturn(new RealmRepresentation());
 
-        var response = new KeycloakReadinessHealthCheck(keycloak).call();
+        var response = new KeycloakReadinessHealthCheck(keycloak, new KeycloakResilienceExecutor()).call();
 
         assertEquals("keycloak", response.getName());
         assertEquals(HealthCheckResponse.Status.UP, response.getStatus());
@@ -37,7 +38,7 @@ class KeycloakReadinessHealthCheckTest {
         when(keycloak.realm()).thenReturn(realm);
         when(realm.toRepresentation()).thenThrow(exception);
 
-        var healthCheck = new KeycloakReadinessHealthCheck(keycloak);
+        var healthCheck = new KeycloakReadinessHealthCheck(keycloak, new KeycloakResilienceExecutor());
 
         assertThrows(ProcessingException.class, healthCheck::call);
     }

@@ -8,6 +8,7 @@ import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 import io.github.flaviodotcom.infrastructure.keycloak.candidate.KeycloakRoleCandidateFinder;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakRepresentationMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.matcher.KeycloakRoleMatcher;
+import io.github.flaviodotcom.infrastructure.keycloak.resilience.KeycloakResilienceExecutor;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakHttpResponseHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,54 +25,65 @@ public class KeycloakRoleGateway implements IdentityRoleGateway {
     private final KeycloakRoleCandidateFinder candidateFinder;
     private final KeycloakRepresentationMapper mapper;
     private final KeycloakRoleMatcher matcher;
+    private final KeycloakResilienceExecutor resilience;
 
     @Override
     public List<IdentityRole> findRoles(RoleSearchCriteria criteria) {
-        try {
-            return this.candidateFinder.findCandidates(criteria).stream()
-                    .map(this.mapper::toIdentityRole)
-                    .filter(role -> this.matcher.matches(role, criteria))
-                    .toList();
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeRead(() -> {
+            try {
+                return this.candidateFinder.findCandidates(criteria).stream()
+                        .map(this.mapper::toIdentityRole)
+                        .filter(role -> this.matcher.matches(role, criteria))
+                        .toList();
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityRole findRoleById(String id) {
-        try {
-            return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeRead(() -> {
+            try {
+                return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityRole createRole(CreateIdentityRoleCommand command) {
-        try {
-            this.keycloak.roles().create(this.mapper.toRoleRepresentation(command));
-            return this.mapper.toIdentityRole(this.keycloak.roles().get(command.name()).toRepresentation());
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeWrite(() -> {
+            try {
+                this.keycloak.roles().create(this.mapper.toRoleRepresentation(command));
+                return this.mapper.toIdentityRole(this.keycloak.roles().get(command.name()).toRepresentation());
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public IdentityRole updateRole(String id, UpdateIdentityRoleCommand command) {
-        try {
-            this.keycloak.rolesById().updateRole(id, this.mapper.toRoleRepresentation(id, command));
-            return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        return this.resilience.executeWrite(() -> {
+            try {
+                this.keycloak.rolesById().updateRole(id, this.mapper.toRoleRepresentation(id, command));
+                return this.mapper.toIdentityRole(this.keycloak.rolesById().getRole(id));
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 
     @Override
     public void deleteRole(String id) {
-        try {
-            this.keycloak.rolesById().deleteRole(id);
-        } catch (WebApplicationException exception) {
-            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
-        }
+        this.resilience.executeWrite(() -> {
+            try {
+                this.keycloak.rolesById().deleteRole(id);
+            } catch (WebApplicationException exception) {
+                throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+            }
+        });
     }
 }
