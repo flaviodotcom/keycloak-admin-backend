@@ -3,6 +3,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityGroupCommand;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityRoleCommand;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.PatchIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityGroupCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityRoleCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
@@ -80,6 +81,22 @@ public class KeycloakRepresentationMapper {
         representation.setEnabled(command.enabled());
         representation.setEmailVerified(command.emailVerified());
         representation.setAttributes(this.copyAttributes(command.attributes(), true));
+        return representation;
+    }
+
+    public UserRepresentation toUserRepresentation(String id,
+                                                   UserRepresentation current,
+                                                   PatchIdentityUserCommand command,
+                                                   Map<String, List<String>> attributes) {
+        var representation = new UserRepresentation();
+        representation.setId(id);
+        representation.setUsername(command.username() == null ? current.getUsername() : command.username());
+        representation.setEmail(command.email() == null ? current.getEmail() : command.email());
+        representation.setFirstName(command.firstName() == null ? current.getFirstName() : command.firstName());
+        representation.setLastName(command.lastName() == null ? current.getLastName() : command.lastName());
+        representation.setEnabled(command.enabled() == null ? current.isEnabled() : command.enabled());
+        representation.setEmailVerified(command.emailVerified() == null ? current.isEmailVerified() : command.emailVerified());
+        representation.setAttributes(this.copyAttributes(attributes, true));
         return representation;
     }
 

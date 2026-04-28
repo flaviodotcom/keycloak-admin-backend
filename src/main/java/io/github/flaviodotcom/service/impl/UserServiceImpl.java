@@ -5,6 +5,7 @@ import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.dto.CreateUserRequest;
+import io.github.flaviodotcom.dto.PatchUserRequest;
 import io.github.flaviodotcom.dto.UpdateUserRequest;
 import io.github.flaviodotcom.dto.UserGroupResponse;
 import io.github.flaviodotcom.dto.UserResponse;
@@ -70,6 +71,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse updateUser(String id, UpdateUserRequest request) {
         return UserResponse.fromIdentityUser(this.identityUserGateway.updateUser(id, request.toCommand()));
+    }
+
+    @Override
+    public UserResponse patchUser(String id, PatchUserRequest request) {
+        return UserResponse.fromIdentityUser(this.identityUserGateway.patchUser(id, request.toCommand()));
     }
 
     @Override

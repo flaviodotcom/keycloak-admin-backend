@@ -184,7 +184,8 @@ pagination before those filters could return incomplete pages.
 | `GET` | `/v1/users` | Search users. |
 | `GET` | `/v1/users/{id}` | Find a user by id. |
 | `POST` | `/v1/users` | Create a user. |
-| `PUT` | `/v1/users/{id}` | Update a user. |
+| `PUT` | `/v1/users/{id}` | Replace a user. |
+| `PATCH` | `/v1/users/{id}` | Partially update a user. |
 | `DELETE` | `/v1/users/{id}` | Delete a user. |
 
 Supported query parameters for `GET /v1/users`:
@@ -289,7 +290,7 @@ After the user is created, the backend assigns the informed groups and asks
 Keycloak to send the `UPDATE_PASSWORD` required action email to the user's email.
 SMTP must be configured in Keycloak for that email action to succeed.
 
-Update user:
+Replace user:
 
 ```http
 PUT /v1/users/{id}
@@ -310,6 +311,32 @@ Content-Type: application/json
   }
 }
 ```
+
+`PUT /v1/users/{id}` has full-replace semantics. Fields that default in the
+request DTO keep their defaults, and `attributes` defaults to an empty map. This
+means a `PUT` request without `attributes` replaces the user with no attributes.
+
+Partially update user:
+
+```http
+PATCH /v1/users/{id}
+Content-Type: application/json
+```
+
+```json
+{
+  "firstName": "Maria Clara",
+  "enabled": true
+}
+```
+
+`PATCH /v1/users/{id}` only changes fields present in the request. Missing
+fields keep their current Keycloak values. Attribute behavior is explicit:
+
+- missing `attributes`: preserves current attributes;
+- `attributes: {}`: clears attributes;
+- `attributes` with values: replaces the full attribute map and rebuilds
+  internal search attributes when needed.
 
 ### Groups
 

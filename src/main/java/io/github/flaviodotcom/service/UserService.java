@@ -2,6 +2,7 @@ package io.github.flaviodotcom.service;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.dto.CreateUserRequest;
+import io.github.flaviodotcom.dto.PatchUserRequest;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.UpdateUserRequest;
@@ -17,6 +18,8 @@ public interface UserService {
     UserResponse createUser(CreateUserRequest request);
 
     UserResponse updateUser(String id, UpdateUserRequest request);
+
+    UserResponse patchUser(String id, PatchUserRequest request);
 
     void deleteUser(String id);
 }

@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.PatchIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
@@ -289,6 +290,117 @@ class KeycloakUserGatewayTest {
                 "Teste",
                 true,
                 false,
+                Map.of("name", List.of("Pedro Paulo Timbó Teste"))
+        ));
+
+        assertEquals("pedro.teste", user.username());
+        verify(userResource).update(argThat(representation ->
+                List.of("pedro paulo timbo teste").equals(representation.getAttributes().get("__search_name"))
+        ));
+    }
+
+    @Test
+    void givenPatchWithoutAttributes_WhenPatchUser_ThenPreserveCurrentAttributes() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var gateway = gateway(keycloak, mock(IdentityUserAttributeGateway.class));
+        var currentUser = user("user-1", "john", "john@example.com", "John", "Doe", true);
+        currentUser.setEmailVerified(true);
+        currentUser.setAttributes(Map.of(
+                "department", List.of("IT"),
+                "__search_department", List.of("it")
+        ));
+        var updatedUser = user("user-1", "john", "john@example.com", "Johnny", "Doe", true);
+        updatedUser.setEmailVerified(true);
+        updatedUser.setAttributes(currentUser.getAttributes());
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(currentUser, updatedUser);
+
+        var user = gateway.patchUser("user-1", new PatchIdentityUserCommand(
+                null,
+                null,
+                "Johnny",
+                null,
+                null,
+                null,
+                null
+        ));
+
+        assertEquals("Johnny", user.firstName());
+        verify(userResource).update(argThat(representation ->
+                "john".equals(representation.getUsername())
+                        && "Johnny".equals(representation.getFirstName())
+                        && "Doe".equals(representation.getLastName())
+                        && List.of("IT").equals(representation.getAttributes().get("department"))
+                        && List.of("it").equals(representation.getAttributes().get("__search_department"))
+        ));
+    }
+
+    @Test
+    void givenPatchWithEmptyAttributes_WhenPatchUser_ThenClearAttributes() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var gateway = gateway(keycloak, mock(IdentityUserAttributeGateway.class));
+        var currentUser = user("user-1", "john", "john@example.com", "John", "Doe", true);
+        currentUser.setAttributes(Map.of("department", List.of("IT")));
+        var updatedUser = user("user-1", "john", "john@example.com", "John", "Doe", true);
+        updatedUser.setAttributes(Map.of());
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(currentUser, updatedUser);
+
+        var user = gateway.patchUser("user-1", new PatchIdentityUserCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Map.of()
+        ));
+
+        assertEquals("john", user.username());
+        verify(userResource).update(argThat(representation -> representation.getAttributes().isEmpty()));
+    }
+
+    @Test
+    void givenPatchWithInsensitiveAttribute_WhenPatchUser_ThenPersistInternalSearchAttribute() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var attributeGateway = mock(IdentityUserAttributeGateway.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var gateway = gateway(keycloak, attributeGateway);
+        var currentUser = user("user-1", "pedro.teste", "pedro.teste@email.com", "Pedro", "Teste", true);
+        currentUser.setAttributes(Map.of("name", List.of("Pedro Teste")));
+        var updatedUser = user("user-1", "pedro.teste", "pedro.teste@email.com", "Pedro", "Teste", true);
+        updatedUser.setAttributes(Map.of(
+                "name", List.of("Pedro Paulo Timbo Teste"),
+                "__search_name", List.of("pedro paulo timbo teste")
+        ));
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        when(attributeGateway.findAttribute("name")).thenReturn(new IdentityUserAttribute(
+                "name",
+                Map.of(),
+                true,
+                false,
+                false
+        ));
+        when(userResource.toRepresentation()).thenReturn(currentUser, updatedUser);
+
+        var user = gateway.patchUser("user-1", new PatchIdentityUserCommand(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 Map.of("name", List.of("Pedro Paulo Timbó Teste"))
         ));
 

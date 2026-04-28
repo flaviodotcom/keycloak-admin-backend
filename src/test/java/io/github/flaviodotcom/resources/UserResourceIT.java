@@ -332,6 +332,43 @@ class UserResourceIT {
     }
 
     @Test
+    void givenPartialRequest_WhenPatchUser_ThenReturnPatchedResponse() {
+        when(this.identityUserGateway.patchUser(any(), any())).thenReturn(new IdentityUser(
+                "user-1",
+                "john",
+                "john@example.com",
+                "Johnny",
+                "Doe",
+                true,
+                true,
+                123L,
+                Map.of("department", List.of("IT"))
+        ));
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "firstName": "Johnny"
+                        }
+                        """)
+                .when()
+                .patch("/v1/users/user-1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo("user-1"))
+                .body("username", equalTo("john"))
+                .body("firstName", equalTo("Johnny"))
+                .body("attributes.department[0]", equalTo("IT"));
+
+        verify(this.identityUserGateway).patchUser(argThat("user-1"::equals), argThat(command ->
+                "Johnny".equals(command.firstName())
+                        && command.username() == null
+                        && command.attributes() == null
+        ));
+    }
+
+    @Test
     void givenId_WhenDeleteUser_ThenReturnNoContent() {
         given()
                 .when()

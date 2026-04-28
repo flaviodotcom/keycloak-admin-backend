@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
+import io.github.flaviodotcom.domain.identity.command.PatchIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
@@ -79,6 +80,22 @@ public class KeycloakUserGateway implements IdentityUserGateway {
                     id,
                     command.withAttributes(this.attributeIndex.index(command.attributes()))
             );
+            userResource.update(userRepresentation);
+            return this.mapper.toIdentityUser(userResource.toRepresentation());
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public IdentityUser patchUser(String id, PatchIdentityUserCommand command) {
+        try {
+            var userResource = this.keycloak.users().get(id);
+            var currentUser = userResource.toRepresentation();
+            var attributes = command.attributes() == null
+                    ? currentUser.getAttributes()
+                    : this.attributeIndex.index(command.attributes());
+            var userRepresentation = this.mapper.toUserRepresentation(id, currentUser, command, attributes);
             userResource.update(userRepresentation);
             return this.mapper.toIdentityUser(userResource.toRepresentation());
         } catch (WebApplicationException exception) {

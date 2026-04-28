@@ -1,12 +1,14 @@
 package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.dto.CreateUserRequest;
+import io.github.flaviodotcom.dto.PatchUserRequest;
 import io.github.flaviodotcom.dto.UpdateUserRequest;
 import io.github.flaviodotcom.resources.support.QueryCriteriaMapper;
 import io.github.flaviodotcom.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -54,6 +56,13 @@ public class UserResource {
     @Operation(summary = "Update a user")
     public Response updateUser(@PathParam("id") String id, @Valid UpdateUserRequest request) {
         return Response.ok(this.userService.updateUser(id, request)).build();
+    }
+
+    @PATCH
+    @Path("{id}")
+    @Operation(summary = "Partially update a user")
+    public Response patchUser(@PathParam("id") String id, @Valid PatchUserRequest request) {
+        return Response.ok(this.userService.patchUser(id, request)).build();
     }
 
     @DELETE
