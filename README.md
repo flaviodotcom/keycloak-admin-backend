@@ -39,6 +39,7 @@ application.
 - Quarkus REST with Jackson
 - Hibernate Validator
 - SmallRye OpenAPI
+- SmallRye Health
 - Lombok
 - JUnit, Mockito and REST Assured
 
@@ -56,6 +57,7 @@ infrastructure/keycloak/   Keycloak gateway implementations and mappers
 dto/                       Public request and response DTOs
 exceptions/                Problem response handling
 i18n/                      Locale resolution and message bundle access
+health/                    Liveness and readiness checks
 ```
 
 Keycloak-specific code is intentionally kept in `infrastructure/keycloak`.
@@ -122,6 +124,19 @@ Swagger UI:
 ```text
 http://localhost:8081/q/swagger-ui
 ```
+
+Health endpoints:
+
+```text
+http://localhost:8081/q/health
+http://localhost:8081/q/health/live
+http://localhost:8081/q/health/ready
+```
+
+The liveness check only reports whether the application process is alive. The
+readiness check validates basic Keycloak connectivity by reading the configured
+realm representation. If Keycloak is unavailable or the admin client cannot
+access the realm, readiness fails and the pod should not receive traffic.
 
 ## Authentication
 
