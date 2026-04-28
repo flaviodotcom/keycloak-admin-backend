@@ -1,22 +1,30 @@
 package io.github.flaviodotcom.service.impl;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityCredentialGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentitySessionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.dto.user.CreateUserRequest;
 import io.github.flaviodotcom.dto.user.PatchUserRequest;
+import io.github.flaviodotcom.dto.user.RequiredActionsRequest;
+import io.github.flaviodotcom.dto.user.ResetPasswordRequest;
 import io.github.flaviodotcom.dto.user.UpdateUserRequest;
 import io.github.flaviodotcom.dto.user.UserGroupResponse;
 import io.github.flaviodotcom.dto.user.UserResponse;
 import io.github.flaviodotcom.dto.user.UserResponseOptions;
+import io.github.flaviodotcom.dto.user.UserSessionResponse;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.service.UserService;
 import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -25,6 +33,9 @@ public class UserServiceImpl implements UserService {
     private final IdentityUserGateway identityUserGateway;
     private final IdentityMembershipGateway identityMembershipGateway;
     private final IdentityUserActionGateway identityUserActionGateway;
+    private final IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
+    private final IdentityCredentialGateway identityCredentialGateway;
+    private final IdentitySessionGateway identitySessionGateway;
 
     @Override
     public PageResponse<UserResponse> findUsers(UserSearchCriteria criteria,
@@ -88,5 +99,62 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendUpdatePasswordEmail(String id) {
         this.identityUserActionGateway.sendUpdatePasswordEmail(id);
+    }
+
+    @Override
+    public void assignGroup(String id, String groupId) {
+        this.identityMembershipGateway.assignUserToGroup(id, groupId);
+    }
+
+    @Override
+    public void unassignGroup(String id, String groupId) {
+        this.identityMembershipGateway.unassignUserFromGroup(id, groupId);
+    }
+
+    @Override
+    public void assignRealmRole(String id, String roleName) {
+        this.identityRoleAssignmentGateway.assignRealmRoleToUser(id, roleName);
+    }
+
+    @Override
+    public void unassignRealmRole(String id, String roleName) {
+        this.identityRoleAssignmentGateway.unassignRealmRoleFromUser(id, roleName);
+    }
+
+    @Override
+    public void assignClientRole(String id, String clientId, String roleName) {
+        this.identityRoleAssignmentGateway.assignClientRoleToUser(id, clientId, roleName);
+    }
+
+    @Override
+    public void unassignClientRole(String id, String clientId, String roleName) {
+        this.identityRoleAssignmentGateway.unassignClientRoleFromUser(id, clientId, roleName);
+    }
+
+    @Override
+    public void resetPassword(String id, ResetPasswordRequest request) {
+        this.identityCredentialGateway.resetPassword(id, request.value(), request.temporary());
+    }
+
+    @Override
+    public void updateRequiredActions(String id, RequiredActionsRequest request) {
+        this.identityCredentialGateway.updateRequiredActions(id, request.actions());
+    }
+
+    @Override
+    public List<UserSessionResponse> findSessions(String id) {
+        return this.identitySessionGateway.findUserSessions(id).stream()
+                .map(UserSessionResponse::fromIdentityUserSession)
+                .toList();
+    }
+
+    @Override
+    public void logout(String id) {
+        this.identitySessionGateway.logoutUser(id);
+    }
+
+    @Override
+    public void deleteSession(String id, String sessionId) {
+        this.identitySessionGateway.deleteUserSession(id, sessionId);
     }
 }

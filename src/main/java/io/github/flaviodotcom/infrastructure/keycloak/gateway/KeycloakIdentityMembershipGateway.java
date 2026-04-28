@@ -49,6 +49,24 @@ public class KeycloakIdentityMembershipGateway implements IdentityMembershipGate
     }
 
     @Override
+    public void assignUserToGroup(String userId, String groupId) {
+        try {
+            this.keycloak.users().get(userId).joinGroup(groupId);
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public void unassignUserFromGroup(String userId, String groupId) {
+        try {
+            this.keycloak.users().get(userId).leaveGroup(groupId);
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
     public List<IdentityUser> findGroupMembers(String groupId) {
         try {
             return this.keycloak.groups().group(groupId).members(FIRST_RESULT, MAX_RESULTS).stream()

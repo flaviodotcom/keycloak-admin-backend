@@ -72,4 +72,40 @@ public class GroupResource {
         this.groupService.deleteGroup(id);
         return Response.noContent().build();
     }
+
+    @POST
+    @Path("{id}/roles/realm/{roleName}")
+    @Operation(summary = "Assign a realm role to a group")
+    public Response assignRealmRole(@PathParam("id") String id, @PathParam("roleName") String roleName) {
+        this.groupService.assignRealmRole(id, roleName);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/roles/realm/{roleName}")
+    @Operation(summary = "Unassign a realm role from a group")
+    public Response unassignRealmRole(@PathParam("id") String id, @PathParam("roleName") String roleName) {
+        this.groupService.unassignRealmRole(id, roleName);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("{id}/roles/clients/{clientId}/{roleName}")
+    @Operation(summary = "Assign a client role to a group")
+    public Response assignClientRole(@PathParam("id") String id,
+                                     @PathParam("clientId") String clientId,
+                                     @PathParam("roleName") String roleName) {
+        this.groupService.assignClientRole(id, clientId, roleName);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/roles/clients/{clientId}/{roleName}")
+    @Operation(summary = "Unassign a client role from a group")
+    public Response unassignClientRole(@PathParam("id") String id,
+                                       @PathParam("clientId") String clientId,
+                                       @PathParam("roleName") String roleName) {
+        this.groupService.unassignClientRole(id, clientId, roleName);
+        return Response.noContent().build();
+    }
 }

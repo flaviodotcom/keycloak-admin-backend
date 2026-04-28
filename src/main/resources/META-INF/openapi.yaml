@@ -299,6 +299,222 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/UpdatePasswordEmailError'
+  /v1/users/{id}/groups/{groupId}:
+    post:
+      tags:
+        - Users
+      summary: Assign a group to a user
+      operationId: assignUserGroup
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/GroupId'
+      responses:
+        '204':
+          description: Group assigned to the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Users
+      summary: Unassign a group from a user
+      operationId: unassignUserGroup
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/GroupId'
+      responses:
+        '204':
+          description: Group unassigned from the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/roles/realm/{roleName}:
+    post:
+      tags:
+        - Users
+      summary: Assign a realm role to a user
+      operationId: assignUserRealmRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Realm role assigned to the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Users
+      summary: Unassign a realm role from a user
+      operationId: unassignUserRealmRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Realm role unassigned from the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/roles/clients/{clientId}/{roleName}:
+    post:
+      tags:
+        - Users
+      summary: Assign a client role to a user
+      operationId: assignUserClientRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Client role assigned to the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Users
+      summary: Unassign a client role from a user
+      operationId: unassignUserClientRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Client role unassigned from the user.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/password:
+    put:
+      tags:
+        - Users
+      summary: Reset a user password
+      operationId: resetUserPassword
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            example:
+              value: ChangeMe123!
+              temporary: true
+      responses:
+        '204':
+          description: Password reset.
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/required-actions:
+    put:
+      tags:
+        - Users
+      summary: Update user required actions
+      operationId: updateUserRequiredActions
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequiredActionsRequest'
+            example:
+              actions:
+                - UPDATE_PASSWORD
+                - VERIFY_EMAIL
+      responses:
+        '204':
+          description: Required actions updated.
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/sessions:
+    get:
+      tags:
+        - Users
+      summary: List user sessions
+      operationId: findUserSessions
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: User sessions found.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Users
+      summary: Logout a user from all sessions
+      operationId: logoutUser
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: User logged out.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/{id}/sessions/{sessionId}:
+    delete:
+      tags:
+        - Users
+      summary: Delete a user session
+      operationId: deleteUserSession
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204':
+          description: User session deleted.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/users/attributes:
     post:
       tags:
@@ -342,6 +558,54 @@ paths:
                 $ref: '#/components/schemas/UserAttributeResponse'
         '400':
           $ref: '#/components/responses/ValidationProblem'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/users/attributes/{name}:
+    put:
+      tags:
+        - User Profile Attributes
+      summary: Update a User Profile attribute
+      description: |
+        Updates a Keycloak User Profile attribute managed by this backend.
+        If localization update fails after the User Profile update, the backend
+        restores the previous User Profile attribute configuration and
+        propagates the original error.
+      operationId: updateUserAttribute
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/AttributeName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserAttributeRequest'
+      responses:
+        '200':
+          description: User Profile attribute updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAttributeResponse'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - User Profile Attributes
+      summary: Delete a User Profile attribute
+      operationId: deleteUserAttribute
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/AttributeName'
+      responses:
+        '204':
+          description: User Profile attribute deleted.
         '422':
           $ref: '#/components/responses/BusinessRuleViolation'
         '500':
@@ -535,6 +799,78 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/groups/{id}/roles/realm/{roleName}:
+    post:
+      tags:
+        - Groups
+      summary: Assign a realm role to a group
+      operationId: assignGroupRealmRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Realm role assigned to the group.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Groups
+      summary: Unassign a realm role from a group
+      operationId: unassignGroupRealmRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Realm role unassigned from the group.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/groups/{id}/roles/clients/{clientId}/{roleName}:
+    post:
+      tags:
+        - Groups
+      summary: Assign a client role to a group
+      operationId: assignGroupClientRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Client role assigned to the group.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Groups
+      summary: Unassign a client role from a group
+      operationId: unassignGroupClientRole
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/RoleName'
+      responses:
+        '204':
+          description: Client role unassigned from the group.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /v1/roles:
@@ -758,6 +1094,41 @@ components:
       schema:
         type: string
       description: Keycloak resource identifier.
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Keycloak group identifier.
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Keycloak client id.
+    RoleName:
+      name: roleName
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Keycloak role name.
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Keycloak user session identifier.
+    AttributeName:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Keycloak User Profile public attribute name.
     Page:
       name: page
       in: query
@@ -943,6 +1314,32 @@ components:
             - $ref: '#/components/schemas/AttributeMap'
           nullable: true
       additionalProperties: false
+    ResetPasswordRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          minLength: 1
+        temporary:
+          type: boolean
+          default: false
+      additionalProperties: false
+    RequiredActionsRequest:
+      type: object
+      required:
+        - actions
+      properties:
+        actions:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          example:
+            - UPDATE_PASSWORD
+      additionalProperties: false
     UserResponse:
       type: object
       properties:
@@ -984,6 +1381,31 @@ components:
           type: string
         path:
           type: string
+      additionalProperties: false
+    UserSessionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        ipAddress:
+          type: string
+          nullable: true
+        start:
+          type: integer
+          format: int64
+        lastAccess:
+          type: integer
+          format: int64
+        rememberMe:
+          type: boolean
+        clients:
+          type: object
+          additionalProperties:
+            type: string
       additionalProperties: false
     CreateGroupRequest:
       type: object
@@ -1075,6 +1497,24 @@ components:
           type: string
           minLength: 1
           description: Public User Profile attribute name. Names prefixed with `__search_` are reserved.
+        displayName:
+          $ref: '#/components/schemas/LocalizedTextMap'
+        insensitive:
+          type: boolean
+          description: Enables case-insensitive and accent-insensitive search metadata.
+        required:
+          type: boolean
+          default: false
+        multivalued:
+          type: boolean
+          default: false
+      additionalProperties: false
+    UpdateUserAttributeRequest:
+      type: object
+      required:
+        - displayName
+        - insensitive
+      properties:
         displayName:
           $ref: '#/components/schemas/LocalizedTextMap'
         insensitive:

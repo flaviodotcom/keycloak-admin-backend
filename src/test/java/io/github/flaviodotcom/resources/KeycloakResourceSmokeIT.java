@@ -14,6 +14,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.nullValue;
 
 @QuarkusTest
 @TestProfile(WithKeycloakTestContainerProfile.class)
@@ -24,6 +25,8 @@ class KeycloakResourceSmokeIT {
     private static final String USER_EMAIL = USERNAME + "@example.com";
     private static final String GROUP_NAME = "it-group-" + RUN_ID;
     private static final String ROLE_NAME = "it-role-" + RUN_ID;
+    private static final String SMOKE_CLIENT_ID = "it-client";
+    private static final String SMOKE_CLIENT_ROLE = "it-client-role";
 
     @Test
     void givenKeycloakContainer_WhenCreateSearchUpdatePatchAndDeleteUser_ThenUseRealKeycloakAdminApi() {
@@ -126,6 +129,166 @@ class KeycloakResourceSmokeIT {
                 .get("/v1/users/{id}", userId)
                 .then()
                 .statusCode(404);
+    }
+
+    @Test
+    void givenKeycloakContainer_WhenManageUserMembershipRolesCredentialsAndSessions_ThenUseRealKeycloakAdminApi() {
+        var username = "it-access-user-" + RUN_ID;
+        var email = username + "@example.com";
+        var groupName = "it-access-group-" + RUN_ID;
+        var roleName = "it-access-role-" + RUN_ID;
+        String userId = null;
+        String groupId = null;
+        String roleId = null;
+
+        try {
+            groupId = given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "name": "%s"
+                            }
+                            """.formatted(groupName))
+                    .when()
+                    .post("/v1/groups")
+                    .then()
+                    .statusCode(201)
+                    .extract()
+                    .path("id");
+
+            roleId = given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "name": "%s"
+                            }
+                            """.formatted(roleName))
+                    .when()
+                    .post("/v1/roles")
+                    .then()
+                    .statusCode(201)
+                    .extract()
+                    .path("id");
+
+            userId = given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "username": "%s",
+                              "email": "%s",
+                              "enabled": true
+                            }
+                            """.formatted(username, email))
+                    .when()
+                    .post("/v1/users")
+                    .then()
+                    .statusCode(201)
+                    .extract()
+                    .path("id");
+
+            given()
+                    .when()
+                    .post("/v1/users/{id}/groups/{groupId}", userId, groupId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .get("/v1/users/{id}?includeGroups=true", userId)
+                    .then()
+                    .statusCode(200)
+                    .body("groups[0].id", equalTo(groupId));
+
+            given()
+                    .when()
+                    .post("/v1/users/{id}/roles/realm/{roleName}", userId, roleName)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .post("/v1/users/{id}/roles/clients/{clientId}/{roleName}", userId, SMOKE_CLIENT_ID, SMOKE_CLIENT_ROLE)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .post("/v1/groups/{id}/roles/realm/{roleName}", groupId, roleName)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .post("/v1/groups/{id}/roles/clients/{clientId}/{roleName}", groupId, SMOKE_CLIENT_ID, SMOKE_CLIENT_ROLE)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "value": "ChangeMe123!",
+                              "temporary": true
+                            }
+                            """)
+                    .when()
+                    .put("/v1/users/{id}/password", userId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .contentType("application/json")
+                    .body("""
+                            {
+                              "actions": ["UPDATE_PASSWORD"]
+                            }
+                            """)
+                    .when()
+                    .put("/v1/users/{id}/required-actions", userId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .get("/v1/users/{id}/sessions", userId)
+                    .then()
+                    .statusCode(200);
+
+            given()
+                    .when()
+                    .delete("/v1/users/{id}/sessions", userId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .delete("/v1/users/{id}/groups/{groupId}", userId, groupId)
+                    .then()
+                    .statusCode(204);
+
+            given()
+                    .when()
+                    .get("/v1/users/{id}?includeGroups=true", userId)
+                    .then()
+                    .statusCode(200)
+                    .body("groups", nullValue());
+        } finally {
+            if (userId != null) {
+                given()
+                        .when()
+                        .delete("/v1/users/{id}", userId);
+            }
+            if (roleId != null) {
+                given()
+                        .when()
+                        .delete("/v1/roles/{id}", roleId);
+            }
+            if (groupId != null) {
+                given()
+                        .when()
+                        .delete("/v1/groups/{id}", groupId);
+            }
+        }
     }
 
     @Test

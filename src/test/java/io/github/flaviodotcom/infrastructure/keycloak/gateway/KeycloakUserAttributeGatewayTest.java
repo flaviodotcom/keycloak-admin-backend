@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttributeCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserAttributeCommand;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfileAttributeMapper;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
@@ -153,6 +154,62 @@ class KeycloakUserAttributeGatewayTest {
 
         assertEquals(Set.of("cpf", "departamento"), attributes.keySet());
         verify(userProfile).getConfiguration();
+    }
+
+    @Test
+    void givenSensitiveUpdate_WhenUpdateAttribute_ThenRemoveInternalAttribute() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var realm = mock(RealmResource.class);
+        var localization = mock(RealmLocalizationResource.class);
+        var userProfile = mock(UserProfileResource.class);
+        var config = new UPConfig();
+        config.setAttributes(new ArrayList<>());
+        config.addOrReplaceAttribute(new UPAttribute("name"));
+        config.addOrReplaceAttribute(new UPAttribute("__search_name"));
+        var gateway = newGateway(keycloak);
+
+        when(keycloak.realm()).thenReturn(realm);
+        when(realm.localization()).thenReturn(localization);
+        when(keycloak.userProfile()).thenReturn(userProfile);
+        when(userProfile.getConfiguration()).thenReturn(config);
+
+        var attribute = gateway.updateAttribute(new UpdateIdentityUserAttributeCommand(
+                "name",
+                Map.of("en", "Name"),
+                false,
+                true,
+                false
+        ));
+
+        assertEquals("name", attribute.name());
+        assertEquals(false, attribute.insensitive());
+        assertTrue(config.getAttributes().stream().anyMatch(item -> "name".equals(item.getName())));
+        assertTrue(config.getAttributes().stream().noneMatch(item -> "__search_name".equals(item.getName())));
+        verify(userProfile).update(config);
+        verify(localization).createOrUpdateRealmLocalizationTexts(
+                "en",
+                Map.of("identity.user.attribute.name.displayName", "Name")
+        );
+    }
+
+    @Test
+    void givenAttributeName_WhenDeleteAttribute_ThenRemovePublicAndInternalAttributes() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var userProfile = mock(UserProfileResource.class);
+        var config = new UPConfig();
+        config.setAttributes(new ArrayList<>());
+        config.addOrReplaceAttribute(new UPAttribute("name"));
+        config.addOrReplaceAttribute(new UPAttribute("__search_name"));
+        var gateway = newGateway(keycloak);
+
+        when(keycloak.userProfile()).thenReturn(userProfile);
+        when(userProfile.getConfiguration()).thenReturn(config);
+
+        gateway.deleteAttribute("name");
+
+        assertTrue(config.getAttributes().stream().noneMatch(attribute -> "name".equals(attribute.getName())));
+        assertTrue(config.getAttributes().stream().noneMatch(attribute -> "__search_name".equals(attribute.getName())));
+        verify(userProfile).update(config);
     }
 
     private static KeycloakUserAttributeGateway newGateway(KeycloakAdminSupport keycloak) {

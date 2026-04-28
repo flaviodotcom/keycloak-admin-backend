@@ -23,6 +23,8 @@ public class KeycloakTestContainer implements QuarkusTestResourceLifecycleManage
     private static final String ADMIN_CLIENT_ID = "backend-keycloak-admin";
     private static final String ADMIN_CLIENT_SECRET = "test-secret";
     private static final String REALM_MANAGEMENT_CLIENT_ID = "realm-management";
+    private static final String SMOKE_CLIENT_ID = "it-client";
+    private static final String SMOKE_CLIENT_ROLE = "it-client-role";
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final HttpClient HTTP = HttpClient.newHttpClient();
     private static final List<String> ADMIN_ROLES = List.of(
@@ -62,6 +64,7 @@ public class KeycloakTestContainer implements QuarkusTestResourceLifecycleManage
         var accessToken = this.getMasterAccessToken();
         this.createRealm(accessToken);
         this.createAdminClient(accessToken);
+        this.createSmokeClient(accessToken);
         this.assignAdminClientRoles(accessToken);
     }
 
@@ -110,6 +113,31 @@ public class KeycloakTestContainer implements QuarkusTestResourceLifecycleManage
         );
         var response = this.sendJson(accessToken, "/admin/realms/" + REALM + "/clients", client);
         this.ensureStatus(response, 201, "admin client");
+    }
+
+    private void createSmokeClient(String accessToken) {
+        var client = Map.ofEntries(
+                Map.entry("clientId", SMOKE_CLIENT_ID),
+                Map.entry("name", "Integration Test Client"),
+                Map.entry("enabled", true),
+                Map.entry("protocol", "openid-connect"),
+                Map.entry("publicClient", false),
+                Map.entry("serviceAccountsEnabled", false),
+                Map.entry("standardFlowEnabled", false),
+                Map.entry("implicitFlowEnabled", false),
+                Map.entry("directAccessGrantsEnabled", false),
+                Map.entry("authorizationServicesEnabled", false)
+        );
+        var clientResponse = this.sendJson(accessToken, "/admin/realms/" + REALM + "/clients", client);
+        this.ensureStatus(clientResponse, 201, "smoke client");
+
+        var clientUuid = this.findClientId(accessToken, SMOKE_CLIENT_ID);
+        var roleResponse = this.sendJson(
+                accessToken,
+                "/admin/realms/" + REALM + "/clients/" + clientUuid + "/roles",
+                Map.of("name", SMOKE_CLIENT_ROLE)
+        );
+        this.ensureStatus(roleResponse, 201, "smoke client role");
     }
 
     private void assignAdminClientRoles(String accessToken) {

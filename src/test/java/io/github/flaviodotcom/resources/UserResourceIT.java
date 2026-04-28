@@ -2,8 +2,12 @@ package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.domain.identity.model.IdentityUserSession;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityCredentialGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentitySessionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
 import io.github.flaviodotcom.exceptions.BusinessException;
@@ -35,6 +39,15 @@ class UserResourceIT {
 
     @InjectMock
     IdentityUserActionGateway identityUserActionGateway;
+
+    @InjectMock
+    IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
+
+    @InjectMock
+    IdentityCredentialGateway identityCredentialGateway;
+
+    @InjectMock
+    IdentitySessionGateway identitySessionGateway;
 
     @Test
     void givenQueryParams_WhenFindUsers_ThenForwardCriteriaToGateway() {
@@ -464,6 +477,133 @@ class UserResourceIT {
                 .statusCode(204);
 
         verify(this.identityUserActionGateway).sendUpdatePasswordEmail("user-1");
+    }
+
+    @Test
+    void givenGroupId_WhenAssignGroup_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/users/user-1/groups/group-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityMembershipGateway).assignUserToGroup("user-1", "group-1");
+    }
+
+    @Test
+    void givenGroupId_WhenUnassignGroup_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/users/user-1/groups/group-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityMembershipGateway).unassignUserFromGroup("user-1", "group-1");
+    }
+
+    @Test
+    void givenRealmRole_WhenAssignUserRealmRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/users/user-1/roles/realm/manager")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleAssignmentGateway).assignRealmRoleToUser("user-1", "manager");
+    }
+
+    @Test
+    void givenClientRole_WhenAssignUserClientRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/users/user-1/roles/clients/backend-client/client-manager")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleAssignmentGateway)
+                .assignClientRoleToUser("user-1", "backend-client", "client-manager");
+    }
+
+    @Test
+    void givenPassword_WhenResetPassword_ThenReturnNoContent() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "value": "ChangeMe123!",
+                          "temporary": true
+                        }
+                        """)
+                .when()
+                .put("/v1/users/user-1/password")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityCredentialGateway).resetPassword("user-1", "ChangeMe123!", true);
+    }
+
+    @Test
+    void givenRequiredActions_WhenUpdateRequiredActions_ThenReturnNoContent() {
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "actions": ["UPDATE_PASSWORD", "VERIFY_EMAIL"]
+                        }
+                        """)
+                .when()
+                .put("/v1/users/user-1/required-actions")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityCredentialGateway)
+                .updateRequiredActions("user-1", List.of("UPDATE_PASSWORD", "VERIFY_EMAIL"));
+    }
+
+    @Test
+    void givenUserSessions_WhenFindSessions_ThenReturnSessions() {
+        when(this.identitySessionGateway.findUserSessions("user-1")).thenReturn(List.of(
+                new IdentityUserSession(
+                        "session-1",
+                        "user-1",
+                        "john",
+                        "127.0.0.1",
+                        1L,
+                        2L,
+                        false,
+                        Map.of("backend-client", "Backend Client")
+                )
+        ));
+
+        given()
+                .when()
+                .get("/v1/users/user-1/sessions")
+                .then()
+                .statusCode(200)
+                .body("[0].id", equalTo("session-1"))
+                .body("[0].clients.backend-client", equalTo("Backend Client"));
+    }
+
+    @Test
+    void givenId_WhenLogout_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/users/user-1/sessions")
+                .then()
+                .statusCode(204);
+
+        verify(this.identitySessionGateway).logoutUser("user-1");
+    }
+
+    @Test
+    void givenSessionId_WhenDeleteSession_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/users/user-1/sessions/session-1")
+                .then()
+                .statusCode(204);
+
+        verify(this.identitySessionGateway).deleteUserSession("user-1", "session-1");
     }
 
     @Test

@@ -77,6 +77,36 @@ class KeycloakIdentityMembershipGatewayTest {
         verify(groupResource).members(0, Integer.MAX_VALUE);
     }
 
+    @Test
+    void givenUserAndGroupIds_WhenAssignUserToGroup_ThenJoinGroup() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = mock(UsersResource.class);
+        var userResource = mock(UserResource.class);
+        var gateway = this.gateway(keycloak);
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+
+        gateway.assignUserToGroup("user-1", "group-1");
+
+        verify(userResource).joinGroup("group-1");
+    }
+
+    @Test
+    void givenUserAndGroupIds_WhenUnassignUserFromGroup_ThenLeaveGroup() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = mock(UsersResource.class);
+        var userResource = mock(UserResource.class);
+        var gateway = this.gateway(keycloak);
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+
+        gateway.unassignUserFromGroup("user-1", "group-1");
+
+        verify(userResource).leaveGroup("group-1");
+    }
+
     private KeycloakIdentityMembershipGateway gateway(KeycloakAdminSupport keycloak) {
         return new KeycloakIdentityMembershipGateway(keycloak, new KeycloakRepresentationMapper());
     }

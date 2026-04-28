@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.gateway;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttributeCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserAttributeCommand;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
@@ -13,6 +14,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.AllArgsConstructor;
 import org.keycloak.representations.userprofile.config.UPConfig;
+import org.keycloak.representations.userprofile.config.UPAttribute;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -33,7 +35,7 @@ public class KeycloakUserAttributeGateway implements IdentityUserAttributeGatewa
     public IdentityUserAttribute createAttribute(CreateIdentityUserAttributeCommand command) {
         try {
             var config = this.keycloak.userProfile().getConfiguration();
-            config.setAttributes(new ArrayList<>(config.getAttributes() == null ? List.of() : config.getAttributes()));
+            this.ensureMutableAttributes(config);
             this.definitionResolver.ensureCanCreate(config, command.name());
             config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
             if (Boolean.TRUE.equals(command.insensitive())) {
@@ -43,6 +45,43 @@ public class KeycloakUserAttributeGateway implements IdentityUserAttributeGatewa
             this.keycloak.userProfile().update(config);
             this.saveLocalizationOrRemoveAttribute(config, command);
             return this.mapper.toIdentityUserAttribute(command);
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public IdentityUserAttribute updateAttribute(UpdateIdentityUserAttributeCommand command) {
+        try {
+            var config = this.keycloak.userProfile().getConfiguration();
+            this.ensureMutableAttributes(config);
+            this.definitionResolver.resolve(config, command.name());
+            var originalAttributes = List.copyOf(config.getAttributes());
+
+            config.addOrReplaceAttribute(this.mapper.toPublicAttribute(command));
+            if (Boolean.TRUE.equals(command.insensitive())) {
+                config.addOrReplaceAttribute(this.mapper.toInternalAttribute(command));
+            } else {
+                this.removeAttributes(config, SearchableAttributeName.toInternalName(command.name()));
+            }
+
+            this.keycloak.userProfile().update(config);
+            this.saveLocalizationOrRestoreAttributes(config, originalAttributes, command);
+            return this.mapper.toIdentityUserAttribute(command);
+        } catch (WebApplicationException exception) {
+            throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    @Override
+    public void deleteAttribute(String name) {
+        try {
+            SearchableAttributeName.requirePublicName(name);
+            var config = this.keycloak.userProfile().getConfiguration();
+            this.ensureMutableAttributes(config);
+            this.definitionResolver.resolve(config, name);
+            this.removeAttributes(config, name, SearchableAttributeName.toInternalName(name));
+            this.keycloak.userProfile().update(config);
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
         }
@@ -81,18 +120,49 @@ public class KeycloakUserAttributeGateway implements IdentityUserAttributeGatewa
         }
     }
 
+    private void saveLocalizationOrRestoreAttributes(UPConfig config,
+                                                     List<UPAttribute> originalAttributes,
+                                                     UpdateIdentityUserAttributeCommand command) {
+        try {
+            this.localization.saveDisplayName(command.name(), command.displayName());
+        } catch (RuntimeException exception) {
+            this.restoreAttributes(config, originalAttributes, exception);
+            throw exception;
+        }
+    }
+
     private void removeCreatedAttribute(UPConfig config,
                                         CreateIdentityUserAttributeCommand command,
                                         RuntimeException creationFailure) {
         try {
             var createdAttributeNames = this.createdAttributeNames(command);
-            config.setAttributes(config.getAttributes().stream()
-                    .filter(attribute -> !createdAttributeNames.contains(attribute.getName()))
-                    .toList());
+            this.removeAttributes(config, createdAttributeNames.toArray(String[]::new));
             this.keycloak.userProfile().update(config);
         } catch (RuntimeException compensationFailure) {
             creationFailure.addSuppressed(compensationFailure);
         }
+    }
+
+    private void restoreAttributes(UPConfig config,
+                                   List<UPAttribute> originalAttributes,
+                                   RuntimeException updateFailure) {
+        try {
+            config.setAttributes(new ArrayList<>(originalAttributes));
+            this.keycloak.userProfile().update(config);
+        } catch (RuntimeException compensationFailure) {
+            updateFailure.addSuppressed(compensationFailure);
+        }
+    }
+
+    private void removeAttributes(UPConfig config, String... names) {
+        var attributeNames = Set.of(names);
+        config.setAttributes(config.getAttributes().stream()
+                .filter(attribute -> !attributeNames.contains(attribute.getName()))
+                .toList());
+    }
+
+    private void ensureMutableAttributes(UPConfig config) {
+        config.setAttributes(new ArrayList<>(config.getAttributes() == null ? List.of() : config.getAttributes()));
     }
 
     private List<String> createdAttributeNames(CreateIdentityUserAttributeCommand command) {

@@ -3,6 +3,7 @@ package io.github.flaviodotcom.service.impl;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
 import io.github.flaviodotcom.dto.group.CreateGroupRequest;
 import io.github.flaviodotcom.dto.group.GroupResponse;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
@@ -20,6 +21,7 @@ public class GroupServiceImpl implements GroupService {
 
     private final IdentityGroupGateway identityGroupGateway;
     private final IdentityMembershipGateway identityMembershipGateway;
+    private final IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
 
     @Override
     public PageResponse<GroupResponse> findGroups(GroupSearchCriteria criteria, PageRequest pageRequest) {
@@ -57,5 +59,25 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public void deleteGroup(String id) {
         this.identityGroupGateway.deleteGroup(id);
+    }
+
+    @Override
+    public void assignRealmRole(String id, String roleName) {
+        this.identityRoleAssignmentGateway.assignRealmRoleToGroup(id, roleName);
+    }
+
+    @Override
+    public void unassignRealmRole(String id, String roleName) {
+        this.identityRoleAssignmentGateway.unassignRealmRoleFromGroup(id, roleName);
+    }
+
+    @Override
+    public void assignClientRole(String id, String clientId, String roleName) {
+        this.identityRoleAssignmentGateway.assignClientRoleToGroup(id, clientId, roleName);
+    }
+
+    @Override
+    public void unassignClientRole(String id, String clientId, String roleName) {
+        this.identityRoleAssignmentGateway.unassignClientRoleFromGroup(id, clientId, roleName);
     }
 }

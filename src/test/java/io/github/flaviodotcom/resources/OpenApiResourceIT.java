@@ -19,6 +19,11 @@ class OpenApiResourceIT {
                 .statusCode(200)
                 .body(containsString("Keycloak Admin Backend API"))
                 .body(containsString("/v1/users/{id}/actions/update-password-email"))
-                .body(containsString("/v1/users/attributes"));
+                .body(containsString("/v1/users/{id}/groups/{groupId}"))
+                .body(containsString("/v1/users/{id}/roles/clients/{clientId}/{roleName}"))
+                .body(containsString("/v1/users/{id}/password"))
+                .body(containsString("/v1/users/{id}/sessions/{sessionId}"))
+                .body(containsString("/v1/users/attributes/{name}"))
+                .body(containsString("/v1/groups/{id}/roles/clients/{clientId}/{roleName}"));
     }
 }

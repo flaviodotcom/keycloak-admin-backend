@@ -2,6 +2,8 @@ package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.dto.user.CreateUserRequest;
 import io.github.flaviodotcom.dto.user.PatchUserRequest;
+import io.github.flaviodotcom.dto.user.RequiredActionsRequest;
+import io.github.flaviodotcom.dto.user.ResetPasswordRequest;
 import io.github.flaviodotcom.dto.user.UpdateUserRequest;
 import io.github.flaviodotcom.resources.query.UserQueryCriteriaMapper;
 import io.github.flaviodotcom.service.UserService;
@@ -78,6 +80,97 @@ public class UserResource {
     @Operation(summary = "Send update password email")
     public Response sendUpdatePasswordEmail(@PathParam("id") String id) {
         this.userService.sendUpdatePasswordEmail(id);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("{id}/groups/{groupId}")
+    @Operation(summary = "Assign a group to a user")
+    public Response assignGroup(@PathParam("id") String id, @PathParam("groupId") String groupId) {
+        this.userService.assignGroup(id, groupId);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/groups/{groupId}")
+    @Operation(summary = "Unassign a group from a user")
+    public Response unassignGroup(@PathParam("id") String id, @PathParam("groupId") String groupId) {
+        this.userService.unassignGroup(id, groupId);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("{id}/roles/realm/{roleName}")
+    @Operation(summary = "Assign a realm role to a user")
+    public Response assignRealmRole(@PathParam("id") String id, @PathParam("roleName") String roleName) {
+        this.userService.assignRealmRole(id, roleName);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/roles/realm/{roleName}")
+    @Operation(summary = "Unassign a realm role from a user")
+    public Response unassignRealmRole(@PathParam("id") String id, @PathParam("roleName") String roleName) {
+        this.userService.unassignRealmRole(id, roleName);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("{id}/roles/clients/{clientId}/{roleName}")
+    @Operation(summary = "Assign a client role to a user")
+    public Response assignClientRole(@PathParam("id") String id,
+                                     @PathParam("clientId") String clientId,
+                                     @PathParam("roleName") String roleName) {
+        this.userService.assignClientRole(id, clientId, roleName);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/roles/clients/{clientId}/{roleName}")
+    @Operation(summary = "Unassign a client role from a user")
+    public Response unassignClientRole(@PathParam("id") String id,
+                                       @PathParam("clientId") String clientId,
+                                       @PathParam("roleName") String roleName) {
+        this.userService.unassignClientRole(id, clientId, roleName);
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("{id}/password")
+    @Operation(summary = "Reset a user password")
+    public Response resetPassword(@PathParam("id") String id, @Valid ResetPasswordRequest request) {
+        this.userService.resetPassword(id, request);
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("{id}/required-actions")
+    @Operation(summary = "Update user required actions")
+    public Response updateRequiredActions(@PathParam("id") String id, @Valid RequiredActionsRequest request) {
+        this.userService.updateRequiredActions(id, request);
+        return Response.noContent().build();
+    }
+
+    @GET
+    @Path("{id}/sessions")
+    @Operation(summary = "Find user sessions")
+    public Response findSessions(@PathParam("id") String id) {
+        return Response.ok(this.userService.findSessions(id)).build();
+    }
+
+    @DELETE
+    @Path("{id}/sessions")
+    @Operation(summary = "Logout a user from all sessions")
+    public Response logout(@PathParam("id") String id) {
+        this.userService.logout(id);
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{id}/sessions/{sessionId}")
+    @Operation(summary = "Delete a user session")
+    public Response deleteSession(@PathParam("id") String id, @PathParam("sessionId") String sessionId) {
+        this.userService.deleteSession(id, sessionId);
         return Response.noContent().build();
     }
 }

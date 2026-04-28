@@ -10,6 +10,10 @@ public interface IdentityMembershipGateway {
 
     List<IdentityGroup> findUserGroups(String userId);
 
+    void assignUserToGroup(String userId, String groupId);
+
+    void unassignUserFromGroup(String userId, String groupId);
+
     /**
      * Returns one map entry for every requested user id.
      * Implementations must propagate provider errors instead of omitting failed users.

@@ -4,6 +4,7 @@ import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,6 +28,9 @@ class GroupResourceIT {
 
     @InjectMock
     IdentityMembershipGateway identityMembershipGateway;
+
+    @InjectMock
+    IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
 
     @Test
     void givenQueryParams_WhenFindGroups_ThenMapKnownAndAttributeFilters() {
@@ -178,5 +182,39 @@ class GroupResourceIT {
                 .statusCode(204);
 
         verify(this.identityGroupGateway).deleteGroup("group-1");
+    }
+
+    @Test
+    void givenRealmRole_WhenAssignGroupRealmRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/groups/group-1/roles/realm/manager")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleAssignmentGateway).assignRealmRoleToGroup("group-1", "manager");
+    }
+
+    @Test
+    void givenRealmRole_WhenUnassignGroupRealmRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/groups/group-1/roles/realm/manager")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleAssignmentGateway).unassignRealmRoleFromGroup("group-1", "manager");
+    }
+
+    @Test
+    void givenClientRole_WhenAssignGroupClientRole_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/groups/group-1/roles/clients/backend-client/client-manager")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityRoleAssignmentGateway)
+                .assignClientRoleToGroup("group-1", "backend-client", "client-manager");
     }
 }

@@ -21,10 +21,14 @@ application.
 - Nested group support when searching groups.
 - Group membership lookup through `GET /v1/groups/{id}/members`.
 - User creation with optional group assignment through `groupIds`.
+- Group assignment and unassignment after user creation.
+- Realm role and client role assignment for users and groups.
 - Explicit update-password email action through a dedicated user action endpoint.
+- Direct password reset, temporary passwords and custom required actions.
+- User session lookup, full user logout and individual session removal.
 - Optional group expansion in user responses with `includeGroups=true`.
 - Paginated list responses with `page`, `size`, `sort` and `sortBy`.
-- Managed User Profile attribute creation.
+- Managed User Profile attribute creation, update and delete.
 - Case-insensitive and accent-insensitive search support for configured fields.
 - Attribute search support using `attr.<name>` query parameters.
 - Localized error responses using `Accept-Language`.
@@ -64,8 +68,8 @@ health/                    Liveness and readiness checks
 Keycloak-specific code is intentionally kept in `infrastructure/keycloak`.
 Application services depend on domain gateway interfaces, not on Keycloak Admin
 Client classes. This keeps the HTTP/API layer readable and makes it easier to add
-new use cases later, such as role assignments, password actions, or more User
-Profile operations.
+new use cases later without leaking Keycloak Admin Client details into the HTTP
+layer.
 
 DTOs are organized by API context (`dto.user`, `dto.group`, `dto.role`,
 `dto.userattribute`, `dto.pagination` and `dto.error`) to keep the public API
@@ -210,6 +214,17 @@ pagination before those filters could return incomplete pages.
 | `PUT` | `/v1/users/{id}` | Replace a user. |
 | `PATCH` | `/v1/users/{id}` | Partially update a user. |
 | `DELETE` | `/v1/users/{id}` | Delete a user. |
+| `POST` | `/v1/users/{id}/groups/{groupId}` | Assign a group to a user. |
+| `DELETE` | `/v1/users/{id}/groups/{groupId}` | Unassign a group from a user. |
+| `POST` | `/v1/users/{id}/roles/realm/{roleName}` | Assign a realm role to a user. |
+| `DELETE` | `/v1/users/{id}/roles/realm/{roleName}` | Unassign a realm role from a user. |
+| `POST` | `/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a user. |
+| `DELETE` | `/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a user. |
+| `PUT` | `/v1/users/{id}/password` | Reset a user password. |
+| `PUT` | `/v1/users/{id}/required-actions` | Replace a user's required actions. |
+| `GET` | `/v1/users/{id}/sessions` | List user sessions. |
+| `DELETE` | `/v1/users/{id}/sessions` | Logout a user from all sessions. |
+| `DELETE` | `/v1/users/{id}/sessions/{sessionId}` | Delete one user session. |
 | `POST` | `/v1/users/{id}/actions/update-password-email` | Ask Keycloak to send the update-password email. |
 
 Supported query parameters for `GET /v1/users`:
@@ -328,6 +343,62 @@ must be configured in Keycloak for the email action to succeed. If SMTP is not
 configured, the API maps the Keycloak error into the centralized problem
 response flow.
 
+Assign or remove groups after creation:
+
+```http
+POST /v1/users/{id}/groups/{groupId}
+DELETE /v1/users/{id}/groups/{groupId}
+```
+
+Assign or remove realm roles:
+
+```http
+POST /v1/users/{id}/roles/realm/{roleName}
+DELETE /v1/users/{id}/roles/realm/{roleName}
+```
+
+Assign or remove client roles:
+
+```http
+POST /v1/users/{id}/roles/clients/{clientId}/{roleName}
+DELETE /v1/users/{id}/roles/clients/{clientId}/{roleName}
+```
+
+Reset a password directly:
+
+```http
+PUT /v1/users/{id}/password
+Content-Type: application/json
+```
+
+```json
+{
+  "value": "ChangeMe123!",
+  "temporary": true
+}
+```
+
+Replace user required actions:
+
+```http
+PUT /v1/users/{id}/required-actions
+Content-Type: application/json
+```
+
+```json
+{
+  "actions": ["UPDATE_PASSWORD", "VERIFY_EMAIL"]
+}
+```
+
+Session operations:
+
+```http
+GET /v1/users/{id}/sessions
+DELETE /v1/users/{id}/sessions
+DELETE /v1/users/{id}/sessions/{sessionId}
+```
+
 Replace user:
 
 ```http
@@ -386,6 +457,10 @@ fields keep their current Keycloak values. Attribute behavior is explicit:
 | `POST` | `/v1/groups` | Create a group. |
 | `PUT` | `/v1/groups/{id}` | Update a group. |
 | `DELETE` | `/v1/groups/{id}` | Delete a group. |
+| `POST` | `/v1/groups/{id}/roles/realm/{roleName}` | Assign a realm role to a group. |
+| `DELETE` | `/v1/groups/{id}/roles/realm/{roleName}` | Unassign a realm role from a group. |
+| `POST` | `/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a group. |
+| `DELETE` | `/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a group. |
 
 Supported query parameters for `GET /v1/groups`:
 
@@ -438,6 +513,16 @@ groups unless a future endpoint explicitly supports that expansion.
 Supported member sort fields are `id`, `username`, `email`, `firstName`,
 `lastName`, `enabled` and `createdTimestamp`.
 
+Group role assignment uses the same realm-role and client-role path conventions
+used by user role assignment:
+
+```http
+POST /v1/groups/{id}/roles/realm/{roleName}
+DELETE /v1/groups/{id}/roles/realm/{roleName}
+POST /v1/groups/{id}/roles/clients/{clientId}/{roleName}
+DELETE /v1/groups/{id}/roles/clients/{clientId}/{roleName}
+```
+
 ### Roles
 
 | Method | Path | Description |
@@ -482,6 +567,8 @@ Update role:
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/v1/users/attributes` | Create a Keycloak User Profile attribute managed by this backend. |
+| `PUT` | `/v1/users/attributes/{name}` | Update a managed User Profile attribute. |
+| `DELETE` | `/v1/users/attributes/{name}` | Delete a managed User Profile attribute. |
 
 Create attribute:
 
@@ -508,6 +595,31 @@ Fields:
 | `required` | No | Whether Keycloak should require the attribute. Defaults to `false`. |
 | `multivalued` | No | Whether Keycloak should allow multiple values. Defaults to `false`. |
 
+Update attribute:
+
+```http
+PUT /v1/users/attributes/{name}
+Content-Type: application/json
+```
+
+```json
+{
+  "displayName": {
+    "en": "Full name",
+    "pt-BR": "Nome completo"
+  },
+  "insensitive": true,
+  "required": true,
+  "multivalued": false
+}
+```
+
+Delete attribute:
+
+```http
+DELETE /v1/users/attributes/{name}
+```
+
 When `insensitive=true`, the backend maintains an internal normalized attribute
 named `__search_<attributeName>` on user create/update operations. That internal
 attribute is used for searching and is reserved for backend use.
@@ -528,6 +640,10 @@ and its internal `__search_<attributeName>` attribute.
 
 Localization keys that may have been written before the failure are not used if
 the attribute is removed from User Profile.
+
+User Profile attribute update also updates Keycloak User Profile first and then
+writes localization entries. If localization fails, the backend restores the
+previous User Profile attribute configuration and propagates the original error.
 
 ## Operation Consistency
 
@@ -559,6 +675,10 @@ the application wants to trigger the email.
 localization entries for the display name. If localization fails after User
 Profile was updated, the backend removes the newly created attribute or
 attributes and propagates the original error.
+
+`PUT /v1/users/attributes/{name}` follows the same two-step structure. If the
+User Profile update succeeds but localization fails, the backend restores the
+previous User Profile attribute configuration and propagates the original error.
 
 These compensation paths are not silent fallbacks. They are part of the
 operation contract and failures continue through the centralized exception

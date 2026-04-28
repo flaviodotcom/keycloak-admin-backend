@@ -3,6 +3,7 @@ package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserCommand;
 import org.junit.jupiter.api.Test;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.UserSessionRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
@@ -94,5 +95,24 @@ class KeycloakRepresentationMapperTest {
         assertEquals("group-1", identityGroup.id());
         assertEquals("/Backoffice", identityGroup.path());
         assertEquals("RJ", identityGroup.attributes().get("state").getFirst());
+    }
+
+    @Test
+    void givenUserSessionRepresentation_WhenToIdentityUserSession_ThenMapSessionFields() {
+        var session = new UserSessionRepresentation();
+        session.setId("session-1");
+        session.setUserId("user-1");
+        session.setUsername("john");
+        session.setIpAddress("127.0.0.1");
+        session.setStart(1L);
+        session.setLastAccess(2L);
+        session.setRememberMe(false);
+        session.setClients(Map.of("backend-client", "Backend Client"));
+
+        var identitySession = this.mapper.toIdentityUserSession(session);
+
+        assertEquals("session-1", identitySession.id());
+        assertEquals("user-1", identitySession.userId());
+        assertEquals("Backend Client", identitySession.clients().get("backend-client"));
     }
 }

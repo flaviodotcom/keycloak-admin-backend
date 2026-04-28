@@ -60,4 +60,47 @@ class UserAttributeResourceIT {
                         && Boolean.FALSE.equals(command.multivalued())
         ));
     }
+
+    @Test
+    void givenValidRequest_WhenUpdateAttribute_ThenReturnUpdatedResponse() {
+        when(this.identityUserAttributeGateway.updateAttribute(argThat(command ->
+                "cpf".equals(command.name())
+                        && "CPF".equals(command.displayName().get("pt-BR"))
+                        && Boolean.FALSE.equals(command.insensitive())
+                        && Boolean.TRUE.equals(command.required())
+                        && Boolean.FALSE.equals(command.multivalued())
+        ))).thenReturn(new IdentityUserAttribute("cpf", Map.of("pt-BR", "CPF"), false, true, false));
+
+        given()
+                .contentType("application/json")
+                .body("""
+                        {
+                          "displayName": {
+                            "pt-BR": "CPF"
+                          },
+                          "insensitive": false,
+                          "required": true
+                        }
+                        """)
+                .when()
+                .put("/v1/users/attributes/cpf")
+                .then()
+                .statusCode(200)
+                .body("name", equalTo("cpf"))
+                .body("displayName.pt-BR", equalTo("CPF"))
+                .body("insensitive", equalTo(false))
+                .body("required", equalTo(true))
+                .body("multivalued", equalTo(false));
+    }
+
+    @Test
+    void givenAttributeName_WhenDeleteAttribute_ThenReturnNoContent() {
+        given()
+                .when()
+                .delete("/v1/users/attributes/cpf")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityUserAttributeGateway).deleteAttribute("cpf");
+    }
 }

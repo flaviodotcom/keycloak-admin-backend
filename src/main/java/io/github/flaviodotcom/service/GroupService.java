@@ -21,4 +21,12 @@ public interface GroupService {
     GroupResponse updateGroup(String id, UpdateGroupRequest request);
 
     void deleteGroup(String id);
+
+    void assignRealmRole(String id, String roleName);
+
+    void unassignRealmRole(String id, String roleName);
+
+    void assignClientRole(String id, String clientId, String roleName);
+
+    void unassignClientRole(String id, String clientId, String roleName);
 }

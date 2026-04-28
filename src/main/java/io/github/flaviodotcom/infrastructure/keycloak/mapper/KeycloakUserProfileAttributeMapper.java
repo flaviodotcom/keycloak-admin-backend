@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.infrastructure.keycloak.mapper;
 
 import io.github.flaviodotcom.domain.identity.command.CreateIdentityUserAttributeCommand;
+import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserAttributeCommand;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
 import io.github.flaviodotcom.exceptions.BusinessException;
@@ -27,35 +28,85 @@ public class KeycloakUserProfileAttributeMapper {
     private final KeycloakUserAttributeLocalization localization;
 
     public UPAttribute toPublicAttribute(CreateIdentityUserAttributeCommand command) {
-        var attribute = new UPAttribute(command.name(), this.permissions(ADMIN_USER_ROLES, ADMIN_USER_ROLES));
-        attribute.setDisplayName(this.localization.toDisplayNameReference(command.name()));
-        attribute.setMultivalued(command.multivalued());
-        if (Boolean.TRUE.equals(command.required())) {
+        return this.toPublicAttribute(
+                command.name(),
+                command.insensitive(),
+                command.required(),
+                command.multivalued()
+        );
+    }
+
+    public UPAttribute toPublicAttribute(UpdateIdentityUserAttributeCommand command) {
+        return this.toPublicAttribute(
+                command.name(),
+                command.insensitive(),
+                command.required(),
+                command.multivalued()
+        );
+    }
+
+    private UPAttribute toPublicAttribute(String name, Boolean insensitive, Boolean required, Boolean multivalued) {
+        var attribute = new UPAttribute(name, this.permissions(ADMIN_USER_ROLES, ADMIN_USER_ROLES));
+        attribute.setDisplayName(this.localization.toDisplayNameReference(name));
+        attribute.setMultivalued(multivalued);
+        if (Boolean.TRUE.equals(required)) {
             attribute.setRequired(new UPAttributeRequired());
         }
-        attribute.setAnnotations(Map.of(INSENSITIVE_ANNOTATION, command.insensitive()));
+        attribute.setAnnotations(Map.of(INSENSITIVE_ANNOTATION, insensitive));
         return attribute;
     }
 
     public UPAttribute toInternalAttribute(CreateIdentityUserAttributeCommand command) {
-        var internalName = SearchableAttributeName.toInternalName(command.name());
+        return this.toInternalAttribute(command.name(), command.multivalued());
+    }
+
+    public UPAttribute toInternalAttribute(UpdateIdentityUserAttributeCommand command) {
+        return this.toInternalAttribute(command.name(), command.multivalued());
+    }
+
+    private UPAttribute toInternalAttribute(String name, Boolean multivalued) {
+        var internalName = SearchableAttributeName.toInternalName(name);
         var attribute = new UPAttribute(internalName, this.permissions(ADMIN_ONLY_ROLE, ADMIN_ONLY_ROLE));
-        attribute.setMultivalued(command.multivalued());
+        attribute.setMultivalued(multivalued);
         attribute.setAnnotations(Map.of(
                 INSENSITIVE_ANNOTATION, Boolean.TRUE,
                 INTERNAL_ANNOTATION, Boolean.TRUE,
-                SOURCE_ATTRIBUTE_ANNOTATION, command.name()
+                SOURCE_ATTRIBUTE_ANNOTATION, name
         ));
         return attribute;
     }
 
     public IdentityUserAttribute toIdentityUserAttribute(CreateIdentityUserAttributeCommand command) {
-        return new IdentityUserAttribute(
+        return this.toIdentityUserAttribute(
                 command.name(),
                 command.displayName(),
                 command.insensitive(),
                 command.required(),
                 command.multivalued()
+        );
+    }
+
+    public IdentityUserAttribute toIdentityUserAttribute(UpdateIdentityUserAttributeCommand command) {
+        return this.toIdentityUserAttribute(
+                command.name(),
+                command.displayName(),
+                command.insensitive(),
+                command.required(),
+                command.multivalued()
+        );
+    }
+
+    private IdentityUserAttribute toIdentityUserAttribute(String name,
+                                                         Map<String, String> displayName,
+                                                         Boolean insensitive,
+                                                         Boolean required,
+                                                         Boolean multivalued) {
+        return new IdentityUserAttribute(
+                name,
+                displayName,
+                insensitive,
+                required,
+                multivalued
         );
     }
 

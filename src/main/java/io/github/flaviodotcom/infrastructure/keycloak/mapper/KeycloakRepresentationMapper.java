@@ -10,11 +10,13 @@ import io.github.flaviodotcom.domain.identity.command.UpdateIdentityUserCommand;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.domain.identity.model.IdentityUserSession;
 import io.github.flaviodotcom.domain.shared.SearchableAttributeName;
 import io.github.flaviodotcom.i18n.Messages;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserSessionRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.LinkedHashMap;
@@ -56,6 +58,19 @@ public class KeycloakRepresentationMapper {
                 representation.isComposite(),
                 representation.getClientRole(),
                 representation.getContainerId()
+        );
+    }
+
+    public IdentityUserSession toIdentityUserSession(UserSessionRepresentation representation) {
+        return new IdentityUserSession(
+                representation.getId(),
+                representation.getUserId(),
+                representation.getUsername(),
+                representation.getIpAddress(),
+                representation.getStart(),
+                representation.getLastAccess(),
+                representation.isRememberMe(),
+                representation.getClients()
         );
     }
 
