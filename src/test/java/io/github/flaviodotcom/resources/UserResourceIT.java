@@ -2,6 +2,7 @@ package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
@@ -31,6 +32,9 @@ class UserResourceIT {
 
     @InjectMock
     IdentityMembershipGateway identityMembershipGateway;
+
+    @InjectMock
+    IdentityUserActionGateway identityUserActionGateway;
 
     @Test
     void givenQueryParams_WhenFindUsers_ThenForwardCriteriaToGateway() {
@@ -449,6 +453,17 @@ class UserResourceIT {
                 .statusCode(204);
 
         verify(this.identityUserGateway).deleteUser("user-1");
+    }
+
+    @Test
+    void givenId_WhenSendUpdatePasswordEmail_ThenReturnNoContent() {
+        given()
+                .when()
+                .post("/v1/users/user-1/actions/update-password-email")
+                .then()
+                .statusCode(204);
+
+        verify(this.identityUserActionGateway).sendUpdatePasswordEmail("user-1");
     }
 
     @Test

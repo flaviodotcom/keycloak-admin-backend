@@ -63,8 +63,7 @@ public class KeycloakUserGateway implements IdentityUserGateway {
             try (var response = this.keycloak.users().create(userRepresentation)) {
                 KeycloakHttpResponseHandler.ensureCreated(response, KeycloakErrorContext.USER_CREATION);
                 var userId = CreatedResourceLocation.extractId(response);
-                this.postCreationGateway.assignGroups(userId, command.groupIds());
-                this.postCreationGateway.sendUpdatePasswordEmail(userId);
+                this.assignGroupsOrRemoveUser(userId, command.groupIds());
                 return this.mapper.toIdentityUser(this.keycloak.users().get(userId).toRepresentation());
             }
         } catch (WebApplicationException exception) {
@@ -109,6 +108,23 @@ public class KeycloakUserGateway implements IdentityUserGateway {
             this.keycloak.users().get(id).remove();
         } catch (WebApplicationException exception) {
             throw KeycloakHttpResponseHandler.toWebApplicationException(exception.getResponse());
+        }
+    }
+
+    private void assignGroupsOrRemoveUser(String userId, List<String> groupIds) {
+        try {
+            this.postCreationGateway.assignGroups(userId, groupIds);
+        } catch (RuntimeException exception) {
+            this.removeCreatedUser(userId, exception);
+            throw exception;
+        }
+    }
+
+    private void removeCreatedUser(String userId, RuntimeException creationFailure) {
+        try {
+            this.keycloak.users().get(userId).remove();
+        } catch (RuntimeException compensationFailure) {
+            creationFailure.addSuppressed(compensationFailure);
         }
     }
 }

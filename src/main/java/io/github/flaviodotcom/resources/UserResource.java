@@ -72,4 +72,12 @@ public class UserResource {
         this.userService.deleteUser(id);
         return Response.noContent().build();
     }
+
+    @POST
+    @Path("{id}/actions/update-password-email")
+    @Operation(summary = "Send update password email")
+    public Response sendUpdatePasswordEmail(@PathParam("id") String id) {
+        this.userService.sendUpdatePasswordEmail(id);
+        return Response.noContent().build();
+    }
 }

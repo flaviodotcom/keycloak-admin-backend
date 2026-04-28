@@ -1,6 +1,7 @@
 package io.github.flaviodotcom.service.impl;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
 
     private final IdentityUserGateway identityUserGateway;
     private final IdentityMembershipGateway identityMembershipGateway;
+    private final IdentityUserActionGateway identityUserActionGateway;
 
     @Override
     public PageResponse<UserResponse> findUsers(UserSearchCriteria criteria,
@@ -81,5 +83,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(String id) {
         this.identityUserGateway.deleteUser(id);
+    }
+
+    @Override
+    public void sendUpdatePasswordEmail(String id) {
+        this.identityUserActionGateway.sendUpdatePasswordEmail(id);
     }
 }

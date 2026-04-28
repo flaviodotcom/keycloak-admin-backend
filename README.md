@@ -21,9 +21,9 @@ application.
 - Nested group support when searching groups.
 - Group membership lookup through `GET /v1/groups/{id}/members`.
 - User creation with optional group assignment through `groupIds`.
+- Explicit update-password email action through a dedicated user action endpoint.
 - Optional group expansion in user responses with `includeGroups=true`.
 - Paginated list responses with `page`, `size`, `sort` and `sortBy`.
-- Keycloak update-password email action after user creation.
 - Managed User Profile attribute creation.
 - Case-insensitive and accent-insensitive search support for configured fields.
 - Attribute search support using `attr.<name>` query parameters.
@@ -198,6 +198,7 @@ pagination before those filters could return incomplete pages.
 | `PUT` | `/v1/users/{id}` | Replace a user. |
 | `PATCH` | `/v1/users/{id}` | Partially update a user. |
 | `DELETE` | `/v1/users/{id}` | Delete a user. |
+| `POST` | `/v1/users/{id}/actions/update-password-email` | Ask Keycloak to send the update-password email. |
 
 Supported query parameters for `GET /v1/users`:
 
@@ -297,9 +298,23 @@ Defaults:
 - `attributes` defaults to an empty map.
 - `groupIds` defaults to an empty list.
 
-After the user is created, the backend assigns the informed groups and asks
-Keycloak to send the `UPDATE_PASSWORD` required action email to the user's email.
-SMTP must be configured in Keycloak for that email action to succeed.
+After the user is created, the backend assigns the informed groups. The
+update-password email is not sent automatically during user creation. This keeps
+user creation independent from Keycloak SMTP availability and avoids creating a
+user successfully only to fail the request because email delivery is not
+configured.
+
+To ask Keycloak to send the `UPDATE_PASSWORD` required action email, call the
+explicit action endpoint:
+
+```http
+POST /v1/users/{id}/actions/update-password-email
+```
+
+This endpoint returns `204 No Content` when Keycloak accepts the request. SMTP
+must be configured in Keycloak for the email action to succeed. If SMTP is not
+configured, the API maps the Keycloak error into the centralized problem
+response flow.
 
 Replace user:
 
@@ -488,6 +503,54 @@ attribute is used for searching and is reserved for backend use.
 Existing Keycloak User Profile attributes can be used by users. If a user request
 contains an attribute that is not configured in Keycloak User Profile, the API
 rejects the request.
+
+User Profile attribute creation has two Keycloak-side steps:
+
+1. update the realm User Profile configuration;
+2. save the localized display names in Keycloak localization.
+
+If the User Profile update succeeds but localization fails, the backend removes
+the newly created User Profile attribute before propagating the original error.
+For insensitive attributes, the compensation removes both the public attribute
+and its internal `__search_<attributeName>` attribute.
+
+Localization keys that may have been written before the failure are not used if
+the attribute is removed from User Profile.
+
+## Operation Consistency
+
+Keycloak Admin API operations are not database transactions from this backend's
+point of view. The backend therefore keeps multi-step operations explicit and
+uses compensation only where the desired behavior is clear.
+
+### User Creation
+
+`POST /v1/users` performs these steps:
+
+1. create the user in Keycloak;
+2. assign groups from `groupIds`, when provided;
+3. read the created user and return the API response.
+
+If user creation fails, the error is propagated and no compensation is needed.
+If user creation succeeds but group assignment fails, the backend removes the
+newly created user and then propagates the original error. If that cleanup also
+fails, the cleanup failure is attached as a suppressed exception to the original
+failure.
+
+The update-password email action is intentionally outside this flow. Use
+`POST /v1/users/{id}/actions/update-password-email` after creating the user when
+the application wants to trigger the email.
+
+### User Profile Attribute Creation
+
+`POST /v1/users/attributes` updates Keycloak User Profile and then writes
+localization entries for the display name. If localization fails after User
+Profile was updated, the backend removes the newly created attribute or
+attributes and propagates the original error.
+
+These compensation paths are not silent fallbacks. They are part of the
+operation contract and failures continue through the centralized exception
+handling flow.
 
 ## Search Behavior
 

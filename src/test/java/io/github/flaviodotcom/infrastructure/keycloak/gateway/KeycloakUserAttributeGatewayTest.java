@@ -6,6 +6,7 @@ import io.github.flaviodotcom.infrastructure.keycloak.mapper.KeycloakUserProfile
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakAdminSupport;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeDefinitionResolver;
 import io.github.flaviodotcom.infrastructure.keycloak.support.KeycloakUserAttributeLocalization;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.RealmLocalizationResource;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -17,7 +18,9 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,6 +72,36 @@ class KeycloakUserAttributeGatewayTest {
     }
 
     @Test
+    void givenLocalizationFailure_WhenCreateAttribute_ThenRemoveCreatedAttributesAndPropagateError() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var localization = mock(KeycloakUserAttributeLocalization.class);
+        var userProfile = mock(UserProfileResource.class);
+        var config = new UPConfig();
+        config.setAttributes(new ArrayList<>());
+        var gateway = newGateway(keycloak, localization);
+        var displayName = Map.of("pt-BR", "Registro geral");
+
+        when(keycloak.userProfile()).thenReturn(userProfile);
+        when(userProfile.getConfiguration()).thenReturn(config);
+        when(localization.toDisplayNameReference("rg")).thenReturn("${identity.user.attribute.rg.displayName}");
+        doThrow(new WebApplicationException("Localization failed", 500))
+                .when(localization)
+                .saveDisplayName("rg", displayName);
+
+        assertThrows(WebApplicationException.class, () -> gateway.createAttribute(new CreateIdentityUserAttributeCommand(
+                "rg",
+                displayName,
+                true,
+                false,
+                false
+        )));
+
+        verify(userProfile, times(2)).update(config);
+        assertTrue(config.getAttributes().stream().noneMatch(attribute -> "rg".equals(attribute.getName())));
+        assertTrue(config.getAttributes().stream().noneMatch(attribute -> "__search_rg".equals(attribute.getName())));
+    }
+
+    @Test
     void givenUnmanagedAttribute_WhenFindAttribute_ThenReturnLegacySensitiveAttribute() {
         var keycloak = mock(KeycloakAdminSupport.class);
         var userProfile = mock(UserProfileResource.class);
@@ -104,6 +137,11 @@ class KeycloakUserAttributeGatewayTest {
 
     private static KeycloakUserAttributeGateway newGateway(KeycloakAdminSupport keycloak) {
         var localization = new KeycloakUserAttributeLocalization(keycloak);
+        return newGateway(keycloak, localization);
+    }
+
+    private static KeycloakUserAttributeGateway newGateway(KeycloakAdminSupport keycloak,
+                                                           KeycloakUserAttributeLocalization localization) {
         var mapper = new KeycloakUserProfileAttributeMapper(localization);
         var definitionResolver = new KeycloakUserAttributeDefinitionResolver(mapper);
         return new KeycloakUserAttributeGateway(keycloak, mapper, definitionResolver, localization);

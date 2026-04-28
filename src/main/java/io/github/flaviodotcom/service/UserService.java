@@ -22,4 +22,6 @@ public interface UserService {
     UserResponse patchUser(String id, PatchUserRequest request);
 
     void deleteUser(String id);
+
+    void sendUpdatePasswordEmail(String id);
 }

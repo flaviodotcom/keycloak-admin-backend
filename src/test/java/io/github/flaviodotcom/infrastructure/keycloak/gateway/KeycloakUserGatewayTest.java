@@ -22,10 +22,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -228,7 +231,7 @@ class KeycloakUserGatewayTest {
     }
 
     @Test
-    void givenGroupIds_WhenCreateUser_ThenAssignGroupsAndSendUpdatePasswordEmail() {
+    void givenGroupIds_WhenCreateUser_ThenAssignGroups() {
         var keycloak = mock(KeycloakAdminSupport.class);
         var usersResource = usersResource();
         var userResource = mock(UserResource.class);
@@ -256,7 +259,37 @@ class KeycloakUserGatewayTest {
 
         assertEquals("user-1", user.id());
         verify(postCreationGateway).assignGroups("user-1", List.of("group-1", "group-2"));
-        verify(postCreationGateway).sendUpdatePasswordEmail("user-1");
+    }
+
+    @Test
+    void givenGroupAssignmentFailure_WhenCreateUser_ThenRemoveCreatedUserAndPropagateError() {
+        var keycloak = mock(KeycloakAdminSupport.class);
+        var usersResource = usersResource();
+        var userResource = mock(UserResource.class);
+        var postCreationGateway = mock(IdentityUserPostCreationGateway.class);
+        var gateway = gateway(keycloak, mock(IdentityUserAttributeGateway.class), postCreationGateway);
+        var response = Response.created(URI.create("http://localhost:8080/admin/realms/test/users/user-1")).build();
+
+        when(keycloak.users()).thenReturn(usersResource);
+        when(usersResource.create(argThat(representation -> "pedro.teste".equals(representation.getUsername()))))
+                .thenReturn(response);
+        when(usersResource.get("user-1")).thenReturn(userResource);
+        doThrow(new WebApplicationException("Group not found", 404))
+                .when(postCreationGateway)
+                .assignGroups("user-1", List.of("group-1"));
+
+        assertThrows(WebApplicationException.class, () -> gateway.createUser(new CreateIdentityUserCommand(
+                "pedro.teste",
+                "pedro.teste@email.com",
+                "Pedro",
+                "Teste",
+                true,
+                false,
+                Map.of(),
+                List.of("group-1")
+        )));
+
+        verify(userResource).remove();
     }
 
     @Test

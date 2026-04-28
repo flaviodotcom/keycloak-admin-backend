@@ -1,8 +1,6 @@
 package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.config.WithKeycloakTestContainerProfile;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityUserPostCreationGateway;
-import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
@@ -14,7 +12,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 @TestProfile(WithKeycloakTestContainerProfile.class)
@@ -25,9 +22,6 @@ class KeycloakResourceSmokeIT {
     private static final String USER_EMAIL = USERNAME + "@example.com";
     private static final String GROUP_NAME = "it-group-" + RUN_ID;
     private static final String ROLE_NAME = "it-role-" + RUN_ID;
-
-    @InjectMock
-    IdentityUserPostCreationGateway postCreationGateway;
 
     @Test
     void givenKeycloakContainer_WhenCreateSearchUpdatePatchAndDeleteUser_ThenUseRealKeycloakAdminApi() {
@@ -52,8 +46,6 @@ class KeycloakResourceSmokeIT {
                 .body("email", equalTo(USER_EMAIL))
                 .extract()
                 .path("id");
-
-        verify(this.postCreationGateway).sendUpdatePasswordEmail(userId);
 
         given()
                 .when()
