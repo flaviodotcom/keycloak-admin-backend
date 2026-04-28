@@ -635,7 +635,7 @@ class UserResourceIT {
                 .post("/v1/users")
                 .then()
                 .statusCode(201)
-                .header("Location", equalTo("http://localhost:8081/v1/users/user-1"))
+                .header("Location", equalTo("http://localhost:8081/api/v1/users/user-1"))
                 .body("id", equalTo("user-1"))
                 .body("username", equalTo("pedro.teste"));
 

@@ -73,7 +73,7 @@ class GroupResourceIT {
                 .post("/v1/groups")
                 .then()
                 .statusCode(201)
-                .header("Location", equalTo("http://localhost:8081/v1/groups/group-99"))
+                .header("Location", equalTo("http://localhost:8081/api/v1/groups/group-99"))
                 .body("name", equalTo("Operations"));
     }
 

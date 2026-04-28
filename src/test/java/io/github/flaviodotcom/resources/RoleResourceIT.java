@@ -62,7 +62,7 @@ class RoleResourceIT {
                 .post("/v1/roles")
                 .then()
                 .statusCode(201)
-                .header("Location", equalTo("http://localhost:8081/v1/roles/role-99"))
+                .header("Location", equalTo("http://localhost:8081/api/v1/roles/role-99"))
                 .body("name", equalTo("read-users"));
     }
 

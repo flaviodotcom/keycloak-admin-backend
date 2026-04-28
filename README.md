@@ -19,7 +19,7 @@ application.
 - Group CRUD: create, update, find by id, search and delete groups.
 - Role CRUD: create, update, find by id, search and delete realm roles.
 - Nested group support when searching groups.
-- Group membership lookup through `GET /v1/groups/{id}/members`.
+- Group membership lookup through `GET /api/v1/groups/{id}/members`.
 - User creation with optional group assignment through `groupIds`.
 - Group assignment and unassignment after user creation.
 - Realm role and client role assignment for users and groups.
@@ -146,8 +146,15 @@ Start Keycloak first, then run the application:
 API base URL:
 
 ```text
-http://localhost:8081
+http://localhost:8081/api
 ```
+
+The API prefix comes from `quarkus.http.root-path=/api`. Resource classes keep
+their JAX-RS paths focused on the versioned contract, such as `/v1/users`, and
+Quarkus adds the `/api` prefix at runtime. Non-application endpoints use
+Quarkus' default `q` path relative to the root path, so Dev UI, Swagger UI and
+health checks are served under `/api/q`. The static OpenAPI document remains at
+`/openapi` because it is configured with an absolute path.
 
 OpenAPI document:
 
@@ -158,15 +165,15 @@ http://localhost:8081/openapi
 Swagger UI:
 
 ```text
-http://localhost:8081/q/swagger-ui
+http://localhost:8081/api/q/swagger-ui
 ```
 
 Health endpoints:
 
 ```text
-http://localhost:8081/q/health
-http://localhost:8081/q/health/live
-http://localhost:8081/q/health/ready
+http://localhost:8081/api/q/health
+http://localhost:8081/api/q/health/live
+http://localhost:8081/api/q/health/ready
 ```
 
 The liveness check only reports whether the application process is alive. The
@@ -249,26 +256,26 @@ pagination before those filters could return incomplete pages.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/v1/users` | Search users. |
-| `GET` | `/v1/users/{id}` | Find a user by id. |
-| `POST` | `/v1/users` | Create a user. |
-| `PUT` | `/v1/users/{id}` | Replace a user. |
-| `PATCH` | `/v1/users/{id}` | Partially update a user. |
-| `DELETE` | `/v1/users/{id}` | Delete a user. |
-| `POST` | `/v1/users/{id}/groups/{groupId}` | Assign a group to a user. |
-| `DELETE` | `/v1/users/{id}/groups/{groupId}` | Unassign a group from a user. |
-| `POST` | `/v1/users/{id}/roles/realm/{roleName}` | Assign a realm role to a user. |
-| `DELETE` | `/v1/users/{id}/roles/realm/{roleName}` | Unassign a realm role from a user. |
-| `POST` | `/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a user. |
-| `DELETE` | `/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a user. |
-| `PUT` | `/v1/users/{id}/password` | Reset a user password. |
-| `PUT` | `/v1/users/{id}/required-actions` | Replace a user's required actions. |
-| `GET` | `/v1/users/{id}/sessions` | List user sessions. |
-| `DELETE` | `/v1/users/{id}/sessions` | Logout a user from all sessions. |
-| `DELETE` | `/v1/users/{id}/sessions/{sessionId}` | Delete one user session. |
-| `POST` | `/v1/users/{id}/actions/update-password-email` | Ask Keycloak to send the update-password email. |
+| `GET` | `/api/v1/users` | Search users. |
+| `GET` | `/api/v1/users/{id}` | Find a user by id. |
+| `POST` | `/api/v1/users` | Create a user. |
+| `PUT` | `/api/v1/users/{id}` | Replace a user. |
+| `PATCH` | `/api/v1/users/{id}` | Partially update a user. |
+| `DELETE` | `/api/v1/users/{id}` | Delete a user. |
+| `POST` | `/api/v1/users/{id}/groups/{groupId}` | Assign a group to a user. |
+| `DELETE` | `/api/v1/users/{id}/groups/{groupId}` | Unassign a group from a user. |
+| `POST` | `/api/v1/users/{id}/roles/realm/{roleName}` | Assign a realm role to a user. |
+| `DELETE` | `/api/v1/users/{id}/roles/realm/{roleName}` | Unassign a realm role from a user. |
+| `POST` | `/api/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a user. |
+| `DELETE` | `/api/v1/users/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a user. |
+| `PUT` | `/api/v1/users/{id}/password` | Reset a user password. |
+| `PUT` | `/api/v1/users/{id}/required-actions` | Replace a user's required actions. |
+| `GET` | `/api/v1/users/{id}/sessions` | List user sessions. |
+| `DELETE` | `/api/v1/users/{id}/sessions` | Logout a user from all sessions. |
+| `DELETE` | `/api/v1/users/{id}/sessions/{sessionId}` | Delete one user session. |
+| `POST` | `/api/v1/users/{id}/actions/update-password-email` | Ask Keycloak to send the update-password email. |
 
-Supported query parameters for `GET /v1/users`:
+Supported query parameters for `GET /api/v1/users`:
 
 | Parameter | Description |
 | --- | --- |
@@ -289,14 +296,14 @@ Supported query parameters for `GET /v1/users`:
 Example:
 
 ```http
-GET /v1/users?search=Maria&enabled=true&attr.departamento=RH&page=0&size=10&sortBy=username&sort=asc
+GET /api/v1/users?search=Maria&enabled=true&attr.departamento=RH&page=0&size=10&sortBy=username&sort=asc
 ```
 
 Including groups:
 
 ```http
-GET /v1/users?includeGroups=true
-GET /v1/users/{id}?includeGroups=true
+GET /api/v1/users?includeGroups=true
+GET /api/v1/users/{id}?includeGroups=true
 ```
 
 When `includeGroups=true` is used, each user may contain:
@@ -339,7 +346,7 @@ When `includeGroups` is not provided, `groups` is omitted from the response.
 Create user:
 
 ```http
-POST /v1/users
+POST /api/v1/users
 Content-Type: application/json
 ```
 
@@ -376,7 +383,7 @@ To ask Keycloak to send the `UPDATE_PASSWORD` required action email, call the
 explicit action endpoint:
 
 ```http
-POST /v1/users/{id}/actions/update-password-email
+POST /api/v1/users/{id}/actions/update-password-email
 ```
 
 This endpoint returns `204 No Content` when Keycloak accepts the request. SMTP
@@ -387,28 +394,28 @@ response flow.
 Assign or remove groups after creation:
 
 ```http
-POST /v1/users/{id}/groups/{groupId}
-DELETE /v1/users/{id}/groups/{groupId}
+POST /api/v1/users/{id}/groups/{groupId}
+DELETE /api/v1/users/{id}/groups/{groupId}
 ```
 
 Assign or remove realm roles:
 
 ```http
-POST /v1/users/{id}/roles/realm/{roleName}
-DELETE /v1/users/{id}/roles/realm/{roleName}
+POST /api/v1/users/{id}/roles/realm/{roleName}
+DELETE /api/v1/users/{id}/roles/realm/{roleName}
 ```
 
 Assign or remove client roles:
 
 ```http
-POST /v1/users/{id}/roles/clients/{clientId}/{roleName}
-DELETE /v1/users/{id}/roles/clients/{clientId}/{roleName}
+POST /api/v1/users/{id}/roles/clients/{clientId}/{roleName}
+DELETE /api/v1/users/{id}/roles/clients/{clientId}/{roleName}
 ```
 
 Reset a password directly:
 
 ```http
-PUT /v1/users/{id}/password
+PUT /api/v1/users/{id}/password
 Content-Type: application/json
 ```
 
@@ -422,7 +429,7 @@ Content-Type: application/json
 Replace user required actions:
 
 ```http
-PUT /v1/users/{id}/required-actions
+PUT /api/v1/users/{id}/required-actions
 Content-Type: application/json
 ```
 
@@ -435,15 +442,15 @@ Content-Type: application/json
 Session operations:
 
 ```http
-GET /v1/users/{id}/sessions
-DELETE /v1/users/{id}/sessions
-DELETE /v1/users/{id}/sessions/{sessionId}
+GET /api/v1/users/{id}/sessions
+DELETE /api/v1/users/{id}/sessions
+DELETE /api/v1/users/{id}/sessions/{sessionId}
 ```
 
 Replace user:
 
 ```http
-PUT /v1/users/{id}
+PUT /api/v1/users/{id}
 Content-Type: application/json
 ```
 
@@ -462,14 +469,14 @@ Content-Type: application/json
 }
 ```
 
-`PUT /v1/users/{id}` has full-replace semantics. Fields that default in the
+`PUT /api/v1/users/{id}` has full-replace semantics. Fields that default in the
 request DTO keep their defaults, and `attributes` defaults to an empty map. This
 means a `PUT` request without `attributes` replaces the user with no attributes.
 
 Partially update user:
 
 ```http
-PATCH /v1/users/{id}
+PATCH /api/v1/users/{id}
 Content-Type: application/json
 ```
 
@@ -480,7 +487,7 @@ Content-Type: application/json
 }
 ```
 
-`PATCH /v1/users/{id}` only changes fields present in the request. Missing
+`PATCH /api/v1/users/{id}` only changes fields present in the request. Missing
 fields keep their current Keycloak values. Attribute behavior is explicit:
 
 - missing `attributes`: preserves current attributes;
@@ -492,18 +499,18 @@ fields keep their current Keycloak values. Attribute behavior is explicit:
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/v1/groups` | Search groups, including nested groups. |
-| `GET` | `/v1/groups/{id}` | Find a group by id. |
-| `GET` | `/v1/groups/{id}/members` | List users that belong to a group. |
-| `POST` | `/v1/groups` | Create a group. |
-| `PUT` | `/v1/groups/{id}` | Update a group. |
-| `DELETE` | `/v1/groups/{id}` | Delete a group. |
-| `POST` | `/v1/groups/{id}/roles/realm/{roleName}` | Assign a realm role to a group. |
-| `DELETE` | `/v1/groups/{id}/roles/realm/{roleName}` | Unassign a realm role from a group. |
-| `POST` | `/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a group. |
-| `DELETE` | `/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a group. |
+| `GET` | `/api/v1/groups` | Search groups, including nested groups. |
+| `GET` | `/api/v1/groups/{id}` | Find a group by id. |
+| `GET` | `/api/v1/groups/{id}/members` | List users that belong to a group. |
+| `POST` | `/api/v1/groups` | Create a group. |
+| `PUT` | `/api/v1/groups/{id}` | Update a group. |
+| `DELETE` | `/api/v1/groups/{id}` | Delete a group. |
+| `POST` | `/api/v1/groups/{id}/roles/realm/{roleName}` | Assign a realm role to a group. |
+| `DELETE` | `/api/v1/groups/{id}/roles/realm/{roleName}` | Unassign a realm role from a group. |
+| `POST` | `/api/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Assign a client role to a group. |
+| `DELETE` | `/api/v1/groups/{id}/roles/clients/{clientId}/{roleName}` | Unassign a client role from a group. |
 
-Supported query parameters for `GET /v1/groups`:
+Supported query parameters for `GET /api/v1/groups`:
 
 | Parameter | Description |
 | --- | --- |
@@ -545,7 +552,7 @@ Update group:
 Group members:
 
 ```http
-GET /v1/groups/{id}/members?page=0&size=10&sortBy=username&sort=asc
+GET /api/v1/groups/{id}/members?page=0&size=10&sortBy=username&sort=asc
 ```
 
 The response is paginated and contains users. It does not include each member's
@@ -558,23 +565,23 @@ Group role assignment uses the same realm-role and client-role path conventions
 used by user role assignment:
 
 ```http
-POST /v1/groups/{id}/roles/realm/{roleName}
-DELETE /v1/groups/{id}/roles/realm/{roleName}
-POST /v1/groups/{id}/roles/clients/{clientId}/{roleName}
-DELETE /v1/groups/{id}/roles/clients/{clientId}/{roleName}
+POST /api/v1/groups/{id}/roles/realm/{roleName}
+DELETE /api/v1/groups/{id}/roles/realm/{roleName}
+POST /api/v1/groups/{id}/roles/clients/{clientId}/{roleName}
+DELETE /api/v1/groups/{id}/roles/clients/{clientId}/{roleName}
 ```
 
 ### Roles
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/v1/roles` | Search realm roles. |
-| `GET` | `/v1/roles/{id}` | Find a realm role by id. |
-| `POST` | `/v1/roles` | Create a realm role. |
-| `PUT` | `/v1/roles/{id}` | Update a realm role. |
-| `DELETE` | `/v1/roles/{id}` | Delete a realm role. |
+| `GET` | `/api/v1/roles` | Search realm roles. |
+| `GET` | `/api/v1/roles/{id}` | Find a realm role by id. |
+| `POST` | `/api/v1/roles` | Create a realm role. |
+| `PUT` | `/api/v1/roles/{id}` | Update a realm role. |
+| `DELETE` | `/api/v1/roles/{id}` | Delete a realm role. |
 
-Supported query parameters for `GET /v1/roles`:
+Supported query parameters for `GET /api/v1/roles`:
 
 | Parameter | Description |
 | --- | --- |
@@ -607,9 +614,9 @@ Update role:
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/v1/users/attributes` | Create a Keycloak User Profile attribute managed by this backend. |
-| `PUT` | `/v1/users/attributes/{name}` | Update a managed User Profile attribute. |
-| `DELETE` | `/v1/users/attributes/{name}` | Delete a managed User Profile attribute. |
+| `POST` | `/api/v1/users/attributes` | Create a Keycloak User Profile attribute managed by this backend. |
+| `PUT` | `/api/v1/users/attributes/{name}` | Update a managed User Profile attribute. |
+| `DELETE` | `/api/v1/users/attributes/{name}` | Delete a managed User Profile attribute. |
 
 Create attribute:
 
@@ -639,7 +646,7 @@ Fields:
 Update attribute:
 
 ```http
-PUT /v1/users/attributes/{name}
+PUT /api/v1/users/attributes/{name}
 Content-Type: application/json
 ```
 
@@ -658,7 +665,7 @@ Content-Type: application/json
 Delete attribute:
 
 ```http
-DELETE /v1/users/attributes/{name}
+DELETE /api/v1/users/attributes/{name}
 ```
 
 When `insensitive=true`, the backend maintains an internal normalized attribute
@@ -694,7 +701,7 @@ uses compensation only where the desired behavior is clear.
 
 ### User Creation
 
-`POST /v1/users` performs these steps:
+`POST /api/v1/users` performs these steps:
 
 1. create the user in Keycloak;
 2. assign groups from `groupIds`, when provided;
@@ -707,17 +714,17 @@ fails, the cleanup failure is attached as a suppressed exception to the original
 failure.
 
 The update-password email action is intentionally outside this flow. Use
-`POST /v1/users/{id}/actions/update-password-email` after creating the user when
+`POST /api/v1/users/{id}/actions/update-password-email` after creating the user when
 the application wants to trigger the email.
 
 ### User Profile Attribute Creation
 
-`POST /v1/users/attributes` updates Keycloak User Profile and then writes
+`POST /api/v1/users/attributes` updates Keycloak User Profile and then writes
 localization entries for the display name. If localization fails after User
 Profile was updated, the backend removes the newly created attribute or
 attributes and propagates the original error.
 
-`PUT /v1/users/attributes/{name}` follows the same two-step structure. If the
+`PUT /api/v1/users/attributes/{name}` follows the same two-step structure. If the
 User Profile update succeeds but localization fails, the backend restores the
 previous User Profile attribute configuration and propagates the original error.
 
@@ -734,9 +741,9 @@ For users, the `search` parameter is expanded across supported user fields so
 searches like these work consistently:
 
 ```http
-GET /v1/users?search=Conceição
-GET /v1/users?firstName=José
-GET /v1/users?firstName=jose
+GET /api/v1/users?search=Conceição
+GET /api/v1/users?firstName=José
+GET /api/v1/users?firstName=jose
 ```
 
 For text matching, fields configured as insensitive are matched without case or
@@ -746,8 +753,8 @@ the field supports insensitive matching.
 Attribute filters use the `attr.` prefix:
 
 ```http
-GET /v1/users?attr.departamento=RH
-GET /v1/groups?attr.departmentCode=FIN
+GET /api/v1/users?attr.departamento=RH
+GET /api/v1/groups?attr.departmentCode=FIN
 ```
 
 ## Query Parameter Rules
@@ -767,13 +774,13 @@ The API validates query parameters strictly:
 Invalid examples:
 
 ```http
-GET /v1/users?enabled=true&enabled=false
-GET /v1/users?username=
-GET /v1/users?unknown=value
-GET /v1/users?attr.=value
-GET /v1/users?page=-1
-GET /v1/users?size=500
-GET /v1/users?sort=random
+GET /api/v1/users?enabled=true&enabled=false
+GET /api/v1/users?username=
+GET /api/v1/users?unknown=value
+GET /api/v1/users?attr.=value
+GET /api/v1/users?page=-1
+GET /api/v1/users?size=500
+GET /api/v1/users?sort=random
 ```
 
 Request DTO validation also rejects invalid emails, blank `groupIds`, blank

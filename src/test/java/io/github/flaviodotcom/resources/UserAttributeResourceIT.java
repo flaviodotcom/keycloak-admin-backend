@@ -45,7 +45,7 @@ class UserAttributeResourceIT {
                 .post("/v1/users/attributes")
                 .then()
                 .statusCode(201)
-                .header("Location", equalTo("http://localhost:8081/v1/users/attributes/cpf"))
+                .header("Location", equalTo("http://localhost:8081/api/v1/users/attributes/cpf"))
                 .body("name", equalTo("cpf"))
                 .body("displayName.pt-BR", equalTo("CPF"))
                 .body("insensitive", equalTo(true))

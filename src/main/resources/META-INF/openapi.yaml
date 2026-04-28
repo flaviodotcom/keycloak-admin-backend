@@ -15,7 +15,7 @@ info:
     `Accept-Language` header. If no supported language is requested, English is
     used.
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8081/api
     description: Local development server
 tags:
   - name: Users
@@ -125,7 +125,7 @@ paths:
         Creates a user and assigns the groups provided in `groupIds`.
 
         The update-password email is intentionally not sent during user
-        creation. Call `/v1/users/{id}/actions/update-password-email` when the
+        creation. Call `/api/v1/users/{id}/actions/update-password-email` when the
         application wants Keycloak to send that email.
 
         If the user is created but group assignment fails, the backend removes
