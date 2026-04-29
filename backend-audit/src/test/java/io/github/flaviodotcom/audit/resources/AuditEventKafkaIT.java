@@ -99,6 +99,16 @@ class AuditEventKafkaIT {
         org.junit.jupiter.api.Assertions.assertEquals(payload, this.awaitRecord("identity.events.audit.dlq", eventId));
     }
 
+    @Test
+    void givenKafkaAndPostgresAvailable_WhenReadinessIsRequested_ThenReturnUp() {
+        given()
+                .when()
+                .get("/q/health/ready")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("UP"));
+    }
+
     private void awaitAuditEvent(String eventId,
                                  String topic,
                                  String eventType,

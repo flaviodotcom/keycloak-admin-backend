@@ -19,6 +19,9 @@ SMTP through `quarkus-mailer` and publishes the result to `notification.events`.
 - Publish `notification.email.failed` when SMTP delivery fails, then propagate
   the original error so Kafka retry/DLQ can handle the failed command.
 - Serve a dedicated static OpenAPI contract at `/openapi`.
+- Expose liveness and readiness checks. Readiness validates PostgreSQL, Kafka
+  and SMTP connectivity. When `quarkus.mailer.mock=true`, SMTP readiness reports
+  the mock mode instead of opening a network socket.
 
 Kafka payload examples are documented in
 [event contracts](../docs/events/README.md).
@@ -72,3 +75,10 @@ Kafka integration tests use Testcontainers and are disabled by default:
 ```shell
 ./mvnw -pl backend-notification -DskipITs=false verify
 ```
+
+## Idempotency And Outbox
+
+The current idempotency table prevents re-sending commands that are already
+marked as `SENT` or `PROCESSING`. A stricter transactional outbox strategy is
+documented in
+[backend notification outbox](../docs/plans/2026-04-29-backend-notification-outbox.md).

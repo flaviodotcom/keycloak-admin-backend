@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
@@ -109,6 +111,16 @@ class NotificationKafkaIT {
         this.produce("notification.commands", commandId, payload);
 
         assertEquals(payload, this.awaitRecord("notification.commands.dlq", commandId));
+    }
+
+    @Test
+    void givenKafkaPostgresAndMailerAvailable_WhenReadinessIsRequested_ThenReturnUp() {
+        given()
+                .when()
+                .get("/q/health/ready")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("UP"));
     }
 
     private JsonNode awaitNotificationEvent(String commandId) throws Exception {

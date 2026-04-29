@@ -14,6 +14,8 @@ events.
   cross-service troubleshooting.
 - Expose audit records through `GET /api/v1/audit-events`.
 - Serve a dedicated static OpenAPI contract at `/openapi`.
+- Expose liveness and readiness checks. Readiness validates PostgreSQL and
+  Kafka connectivity.
 
 Kafka payload examples are documented in
 [event contracts](../docs/events/README.md).

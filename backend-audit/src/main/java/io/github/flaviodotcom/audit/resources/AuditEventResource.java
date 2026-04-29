@@ -7,19 +7,17 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import lombok.AllArgsConstructor;
 
 import java.util.List;
 
+@AllArgsConstructor
 @Path("/v1/audit-events")
 public class AuditEventResource {
 
     private static final int DEFAULT_LIMIT = 50;
 
     private final AuditEventRepository repository;
-
-    public AuditEventResource(AuditEventRepository repository) {
-        this.repository = repository;
-    }
 
     @GET
     public List<AuditEventResponse> findEvents(@QueryParam("limit") Integer limit) {
