@@ -3,7 +3,8 @@ package io.github.flaviodotcom.service.events;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import lombok.AllArgsConstructor;
+import org.jboss.logging.Logger;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
@@ -12,25 +13,22 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+@AllArgsConstructor
 @ApplicationScoped
 public class IdentityEventPublisher {
 
+    private static final Logger LOG = Logger.getLogger(IdentityEventPublisher.class);
     private static final String SOURCE = "backend-keycloak";
 
     private final ObjectMapper objectMapper;
     private final RequestActorResolver actorResolver;
+    private final RequestCorrelationIdResolver correlationIdResolver;
 
     @ConfigProperty(name = "identity.events.enabled")
-    boolean enabled;
+    private final boolean enabled;
 
     @Channel("identity-events")
-    Emitter<String> identityEvents;
-
-    @Inject
-    public IdentityEventPublisher(ObjectMapper objectMapper, RequestActorResolver actorResolver) {
-        this.objectMapper = objectMapper;
-        this.actorResolver = actorResolver;
-    }
+    private final Emitter<String> identityEvents;
 
     public void publish(String eventType, String subjectType, String subjectId, Map<String, Object> data) {
         if (!this.enabled) {
@@ -42,12 +40,22 @@ public class IdentityEventPublisher {
                 1,
                 eventType,
                 SOURCE,
+                this.correlationIdResolver.resolve(),
                 new IdentityEvent.Actor(this.actorResolver.resolve()),
                 new IdentityEvent.Subject(subjectType, subjectId),
                 OffsetDateTime.now(),
                 data
         );
         this.identityEvents.send(this.toJson(event)).toCompletableFuture().join();
+        LOG.infof(
+                "Identity event published eventId=%s eventType=%s correlationId=%s actor=%s subjectType=%s subjectId=%s",
+                event.eventId(),
+                event.eventType(),
+                event.correlationId(),
+                event.actor().id(),
+                event.subject().type(),
+                event.subject().id()
+        );
     }
 
     private String toJson(IdentityEvent event) {

@@ -44,6 +44,7 @@ class IdentityEventKafkaIT {
 
         given()
                 .header("X-Actor-Id", "admin@example.com")
+                .header("X-Correlation-Id", "correlation-identity-it")
                 .contentType("application/json")
                 .body(body)
                 .when()
@@ -55,6 +56,7 @@ class IdentityEventKafkaIT {
 
         assertEquals("backend-keycloak", event.get("source").asText());
         assertEquals(1, event.get("schemaVersion").asInt());
+        assertEquals("correlation-identity-it", event.get("correlationId").asText());
         assertEquals("admin@example.com", event.get("actor").get("id").asText());
         assertEquals("user", event.get("subject").get("type").asText());
         assertNotNull(event.get("subject").get("id").asText());

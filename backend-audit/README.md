@@ -10,7 +10,10 @@ events.
 - Persist the raw event payload and indexed audit fields in PostgreSQL.
 - Require event payloads to include `schemaVersion`, `eventId` and `eventType`.
 - Preserve idempotency by ignoring duplicated `eventId` values.
+- Store `correlationId`, actor and subject fields when present for
+  cross-service troubleshooting.
 - Expose audit records through `GET /api/v1/audit-events`.
+- Serve a dedicated static OpenAPI contract at `/openapi`.
 
 Kafka payload examples are documented in
 [event contracts](../docs/events/README.md).
@@ -26,6 +29,7 @@ From the repository root:
 With Docker Compose:
 
 ```shell
+./mvnw -pl backend-audit package
 docker compose --profile audit up backend-audit
 ```
 

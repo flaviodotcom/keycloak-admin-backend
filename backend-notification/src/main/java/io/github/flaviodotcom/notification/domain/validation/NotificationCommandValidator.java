@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.notification.service;
+package io.github.flaviodotcom.notification.domain.validation;
 
 import io.github.flaviodotcom.notification.dto.EmailNotificationCommand;
 import jakarta.enterprise.context.ApplicationScoped;

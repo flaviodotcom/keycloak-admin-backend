@@ -38,6 +38,8 @@ services:
 
 ## Build
 
+This project targets Java 21.
+
 Run the current admin backend tests from the repository root:
 
 ```shell
@@ -79,7 +81,15 @@ http://localhost:8081/openapi
 Start the platform dependencies:
 
 ```shell
-docker compose up -d keycloak kafka kafka-ui postgres-audit mailpit
+docker compose up -d keycloak kafka kafka-ui postgres-audit postgres-notification mailpit
+```
+
+The service containers use each module's JVM Dockerfile and expect packaged
+Quarkus artifacts under `target/quarkus-app`. Build them before starting the
+service profiles:
+
+```shell
+./mvnw package
 ```
 
 Start the admin backend with Compose:
@@ -106,6 +116,14 @@ Mailpit is exposed at:
 http://localhost:8025
 ```
 
+OpenAPI endpoints:
+
+```text
+backend-keycloak:      http://localhost:8081/openapi
+backend-audit:         http://localhost:8082/openapi
+backend-notification:  http://localhost:8083/openapi
+```
+
 ## Event Architecture
 
 The target architecture uses Kafka to decouple Keycloak administration from
@@ -122,6 +140,8 @@ The Kafka payloads are documented in [event contracts](docs/events/README.md).
 Every contract has a required `schemaVersion`; the current version is `1`.
 Consumers reject invalid payloads and rely on Kafka retry/DLQ handling instead
 of applying alternate compatibility paths.
+`correlationId` is propagated through events and commands to connect HTTP
+requests, Kafka messages and service logs.
 
 Consumers:
 
@@ -136,6 +156,9 @@ authenticated principal can be used as the actor.
 When `NOTIFICATION_COMMANDS_ENABLED=true`, the admin backend publishes generic
 e-mail commands to `notification.commands` for supported notification actions.
 The update-password email endpoint uses this mode instead of Keycloak SMTP.
+`backend-notification` persists processed command ids in PostgreSQL so Kafka
+reprocessing does not resend e-mails for commands already marked as sent or in
+progress.
 
 See [identity-events architecture](docs/plans/2026-04-29-identity-events-architecture.md)
 for the detailed plan.

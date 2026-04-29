@@ -3,9 +3,12 @@ package io.github.flaviodotcom.audit.service;
 import io.github.flaviodotcom.audit.repository.AuditEventRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class AuditEventService {
+
+    private static final Logger LOG = Logger.getLogger(AuditEventService.class);
 
     private final AuditEventRepository repository;
     private final AuditEventPayloadParser payloadParser;
@@ -27,9 +30,21 @@ public class AuditEventService {
         var eventId = payload.requiredText("eventId");
 
         if (this.repository.existsByEventId(eventId)) {
+            LOG.infof("Audit event already recorded eventId=%s topic=%s", eventId, topic);
             return;
         }
 
-        this.repository.persist(this.eventMapper.toEntity(topic, payloadJson, payload));
+        var event = this.eventMapper.toEntity(topic, payloadJson, payload);
+        this.repository.persist(event);
+        LOG.infof(
+                "Audit event persisted eventId=%s eventType=%s correlationId=%s actor=%s subjectType=%s subjectId=%s topic=%s",
+                event.eventId,
+                event.eventType,
+                event.correlationId,
+                event.actorId,
+                event.subjectType,
+                event.subjectId,
+                event.topic
+        );
     }
 }

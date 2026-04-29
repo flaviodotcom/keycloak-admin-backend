@@ -10,6 +10,7 @@ public record NotificationEvent(
         String eventType,
         String source,
         String commandId,
+        String correlationId,
         Actor actor,
         List<String> recipients,
         OffsetDateTime occurredAt,

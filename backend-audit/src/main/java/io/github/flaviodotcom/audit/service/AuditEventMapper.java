@@ -15,6 +15,7 @@ public class AuditEventMapper {
         event.topic = topic;
         event.eventType = payload.requiredText("eventType");
         event.source = payload.optionalText("source");
+        event.correlationId = payload.optionalText("correlationId");
         event.actorId = payload.optionalNestedText("actor", "id");
         event.subjectType = payload.optionalNestedText("subject", "type");
         event.subjectId = payload.optionalNestedText("subject", "id");

@@ -26,6 +26,9 @@ public class AuditEvent extends PanacheEntity {
     @Column(name = "source", updatable = false)
     public String source;
 
+    @Column(name = "correlation_id", updatable = false)
+    public String correlationId;
+
     @Column(name = "actor_id", updatable = false)
     public String actorId;
 

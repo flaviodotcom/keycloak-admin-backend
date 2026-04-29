@@ -5,6 +5,7 @@ import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.service.events.RequestActorResolver;
+import io.github.flaviodotcom.service.events.RequestCorrelationIdResolver;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -24,8 +25,8 @@ class UserNotificationServiceTest {
         var identityUserActionGateway = mock(IdentityUserActionGateway.class);
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver);
-        service.notificationCommandsEnabled = false;
+        var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, false);
 
         service.sendUpdatePasswordEmail("user-1");
 
@@ -39,13 +40,12 @@ class UserNotificationServiceTest {
         var identityUserActionGateway = mock(IdentityUserActionGateway.class);
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver);
-        service.notificationCommandsEnabled = true;
-        service.updatePasswordSubject = "Update your password";
-        service.updatePasswordTextBody = "Hello {0}, update your password.";
+        var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, true);
 
         when(identityUserGateway.findUserById("user-1")).thenReturn(user("user-1", "maria.teste", "maria@example.com", "Maria"));
         when(actorResolver.resolve()).thenReturn("admin@example.com");
+        when(correlationIdResolver.resolve()).thenReturn("correlation-1");
 
         service.sendUpdatePasswordEmail("user-1");
 
@@ -53,6 +53,7 @@ class UserNotificationServiceTest {
         verify(notificationCommandPublisher).publish(argThat(command ->
                 command.requestedBy().equals("admin@example.com")
                         && command.schemaVersion() == 1
+                        && command.correlationId().equals("correlation-1")
                         && command.to().contains("maria@example.com")
                         && command.subject().equals("Update your password")
                         && command.textBody().equals("Hello Maria, update your password.")
@@ -66,8 +67,8 @@ class UserNotificationServiceTest {
         var identityUserActionGateway = mock(IdentityUserActionGateway.class);
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver);
-        service.notificationCommandsEnabled = true;
+        var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, true);
 
         when(identityUserGateway.findUserById("user-1")).thenReturn(user("user-1", "maria.teste", null, "Maria"));
 
@@ -80,12 +81,18 @@ class UserNotificationServiceTest {
     private static UserNotificationService service(IdentityUserGateway identityUserGateway,
                                                    IdentityUserActionGateway identityUserActionGateway,
                                                    NotificationCommandPublisher notificationCommandPublisher,
-                                                   RequestActorResolver actorResolver) {
+                                                   RequestActorResolver actorResolver,
+                                                   RequestCorrelationIdResolver correlationIdResolver,
+                                                   boolean notificationCommandsEnabled) {
         return new UserNotificationService(
                 identityUserGateway,
                 identityUserActionGateway,
                 notificationCommandPublisher,
-                actorResolver
+                actorResolver,
+                correlationIdResolver,
+                notificationCommandsEnabled,
+                "Update your password",
+                "Hello {0}, update your password."
         );
     }
 

@@ -6,6 +6,7 @@ import java.util.Map;
 public record EmailNotificationCommand(
         String commandId,
         int schemaVersion,
+        String correlationId,
         String requestedBy,
         String from,
         List<String> to,

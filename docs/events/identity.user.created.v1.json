@@ -3,6 +3,7 @@
   "schemaVersion": 1,
   "eventType": "identity.user.created",
   "source": "backend-keycloak",
+  "correlationId": "47f4d61e-5a3a-4d65-a6fb-81219c1a06a4",
   "actor": {
     "id": "admin@example.com"
   },

@@ -12,6 +12,7 @@ import java.util.Map;
 public record EmailNotificationCommand(
         @NotBlank String commandId,
         @NotNull Integer schemaVersion,
+        @NotBlank String correlationId,
         @NotBlank String requestedBy,
         String from,
         @NotEmpty List<@Email String> to,

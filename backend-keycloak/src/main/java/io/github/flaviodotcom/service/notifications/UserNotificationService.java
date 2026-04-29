@@ -5,8 +5,9 @@ import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.exceptions.BusinessException;
 import io.github.flaviodotcom.service.events.RequestActorResolver;
+import io.github.flaviodotcom.service.events.RequestCorrelationIdResolver;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import lombok.AllArgsConstructor;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.text.MessageFormat;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@AllArgsConstructor
 @ApplicationScoped
 public class UserNotificationService {
 
@@ -21,26 +23,16 @@ public class UserNotificationService {
     private final IdentityUserActionGateway identityUserActionGateway;
     private final NotificationCommandPublisher notificationCommandPublisher;
     private final RequestActorResolver actorResolver;
+    private final RequestCorrelationIdResolver correlationIdResolver;
 
     @ConfigProperty(name = "notification.commands.enabled")
-    boolean notificationCommandsEnabled;
+    private final boolean notificationCommandsEnabled;
 
     @ConfigProperty(name = "notification.update-password.subject")
-    String updatePasswordSubject;
+    private final String updatePasswordSubject;
 
     @ConfigProperty(name = "notification.update-password.text-body")
-    String updatePasswordTextBody;
-
-    @Inject
-    public UserNotificationService(IdentityUserGateway identityUserGateway,
-                                   IdentityUserActionGateway identityUserActionGateway,
-                                   NotificationCommandPublisher notificationCommandPublisher,
-                                   RequestActorResolver actorResolver) {
-        this.identityUserGateway = identityUserGateway;
-        this.identityUserActionGateway = identityUserActionGateway;
-        this.notificationCommandPublisher = notificationCommandPublisher;
-        this.actorResolver = actorResolver;
-    }
+    private final String updatePasswordTextBody;
 
     public void sendUpdatePasswordEmail(String userId) {
         if (!this.notificationCommandsEnabled) {
@@ -57,6 +49,7 @@ public class UserNotificationService {
         return new EmailNotificationCommand(
                 UUID.randomUUID().toString(),
                 1,
+                this.correlationIdResolver.resolve(),
                 this.actorResolver.resolve(),
                 null,
                 List.of(user.email()),

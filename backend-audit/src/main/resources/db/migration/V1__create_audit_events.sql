@@ -7,6 +7,7 @@ CREATE TABLE audit_events (
     topic VARCHAR(120) NOT NULL,
     event_type VARCHAR(160) NOT NULL,
     source VARCHAR(160),
+    correlation_id VARCHAR(120),
     actor_id VARCHAR(160),
     subject_type VARCHAR(80),
     subject_id VARCHAR(160),

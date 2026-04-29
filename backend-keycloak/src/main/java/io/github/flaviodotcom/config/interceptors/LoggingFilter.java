@@ -15,11 +15,11 @@ import java.util.concurrent.TimeUnit;
 
 @Provider
 @PreMatching
-class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter {
+public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    public static final String CORRELATION_ID_PROPERTY = LoggingFilter.class.getName() + ".correlationId";
 
-    private static final String CORRELATION_ID_PROPERTY = LoggingFilter.class.getName() + ".correlationId";
     private static final String START_NANOS_PROPERTY = LoggingFilter.class.getName() + ".startNanos";
 
     @Override

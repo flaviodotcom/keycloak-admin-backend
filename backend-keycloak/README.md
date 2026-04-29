@@ -148,6 +148,8 @@ X-Actor-Id: admin@example.com
 
 If Kafka publication fails, the API request fails too. The backend does not keep
 a local database or silently ignore event publication failures.
+Published events include the request `X-Correlation-Id`. When the header is not
+provided, the HTTP logging filter creates one and returns it in the response.
 
 Kafka payload examples are documented in
 [event contracts](../docs/events/README.md). The current contracts require
@@ -165,6 +167,8 @@ This mode is intentionally Keycloak-independent. The notification service sends
 the configured subject/body to the user's e-mail address and then emits
 `notification.email.sent` or `notification.email.failed`. If command publication
 fails, the API request fails.
+Notification commands include the same request correlation id used by the HTTP
+logs and identity events.
 
 When `NOTIFICATION_COMMANDS_ENABLED=false`, the same endpoint keeps the previous
 behavior and asks Keycloak to execute the `UPDATE_PASSWORD` e-mail action.

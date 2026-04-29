@@ -79,13 +79,31 @@ services:
       timeout: 5s
       retries: 10
 
+  postgres-notification:
+    image: postgres:16
+    container_name: keycloak-admin-platform-postgres-notification
+    environment:
+      POSTGRES_DB: notification
+      POSTGRES_USER: notification
+      POSTGRES_PASSWORD: notification
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend-keycloak:
-    image: maven:3.9.12-eclipse-temurin-21
+    build:
+      context: ./backend-keycloak
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-keycloak:1.0.0
     container_name: backend-keycloak
     profiles:
       - admin
-    working_dir: /workspace
-    command: ./mvnw -pl backend-keycloak quarkus:dev -Dquarkus.http.host=0.0.0.0
     depends_on:
       keycloak:
         condition: service_started
@@ -102,17 +120,15 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8081:8081"
-    volumes:
-      - .:/workspace
-      - maven-repository:/root/.m2
 
   backend-audit:
-    image: maven:3.9.12-eclipse-temurin-21
+    build:
+      context: ./backend-audit
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-audit:1.0.0
     container_name: backend-audit
     profiles:
       - audit
-    working_dir: /workspace
-    command: ./mvnw -pl backend-audit quarkus:dev -Dquarkus.http.host=0.0.0.0
     depends_on:
       kafka:
         condition: service_healthy
@@ -125,33 +141,33 @@ services:
       AUDIT_DB_PASSWORD: audit
     ports:
       - "8082:8082"
-    volumes:
-      - .:/workspace
-      - maven-repository:/root/.m2
 
   backend-notification:
-    image: maven:3.9.12-eclipse-temurin-21
+    build:
+      context: ./backend-notification
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-notification:1.0.0
     container_name: backend-notification
     profiles:
       - notification
-    working_dir: /workspace
-    command: ./mvnw -pl backend-notification quarkus:dev -Dquarkus.http.host=0.0.0.0
     depends_on:
       kafka:
         condition: service_healthy
       mailpit:
         condition: service_started
+      postgres-notification:
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres-notification:5432/notification
+      NOTIFICATION_DB_USERNAME: notification
+      NOTIFICATION_DB_PASSWORD: notification
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
       MAIL_FROM: no-reply@example.com
     ports:
       - "8083:8083"
-    volumes:
-      - .:/workspace
-      - maven-repository:/root/.m2
 
 volumes:
   postgres-audit-data:
-  maven-repository:
+  postgres-notification-data:

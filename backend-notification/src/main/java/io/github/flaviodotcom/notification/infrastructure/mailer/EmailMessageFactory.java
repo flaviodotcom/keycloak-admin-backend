@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.notification.service;
+package io.github.flaviodotcom.notification.infrastructure.mailer;
 
 import io.github.flaviodotcom.notification.dto.AttachmentRequest;
 import io.github.flaviodotcom.notification.dto.EmailNotificationCommand;

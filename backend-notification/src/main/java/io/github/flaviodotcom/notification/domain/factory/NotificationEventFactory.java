@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.notification.service;
+package io.github.flaviodotcom.notification.domain.factory;
 
 import io.github.flaviodotcom.notification.dto.EmailNotificationCommand;
 import io.github.flaviodotcom.notification.dto.NotificationEvent;
@@ -29,6 +29,7 @@ public class NotificationEventFactory {
                 eventType,
                 SOURCE,
                 command.commandId(),
+                command.correlationId(),
                 new NotificationEvent.Actor(command.requestedBy()),
                 List.copyOf(command.to()),
                 OffsetDateTime.now(),

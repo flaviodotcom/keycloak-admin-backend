@@ -8,6 +8,7 @@ public record IdentityEvent(
         int schemaVersion,
         String eventType,
         String source,
+        String correlationId,
         Actor actor,
         Subject subject,
         OffsetDateTime occurredAt,
