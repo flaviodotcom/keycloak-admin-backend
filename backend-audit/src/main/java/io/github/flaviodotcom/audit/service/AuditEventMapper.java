@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.audit.service;
 
-import io.github.flaviodotcom.audit.entity.AuditEvent;
+import io.github.flaviodotcom.audit.entities.AuditEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.time.OffsetDateTime;

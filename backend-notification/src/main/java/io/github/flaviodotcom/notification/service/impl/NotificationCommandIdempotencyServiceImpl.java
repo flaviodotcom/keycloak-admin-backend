@@ -1,7 +1,7 @@
 package io.github.flaviodotcom.notification.service.impl;
 
 import io.github.flaviodotcom.notification.domain.model.NotificationCommandStatus;
-import io.github.flaviodotcom.notification.entity.ProcessedNotificationCommand;
+import io.github.flaviodotcom.notification.entities.ProcessedNotificationCommand;
 import io.github.flaviodotcom.notification.repository.ProcessedNotificationCommandRepository;
 import io.github.flaviodotcom.notification.service.NotificationCommandIdempotencyService;
 import jakarta.enterprise.context.ApplicationScoped;

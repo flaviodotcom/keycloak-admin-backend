@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.notification.repository;
 
-import io.github.flaviodotcom.notification.entity.ProcessedNotificationCommand;
+import io.github.flaviodotcom.notification.entities.ProcessedNotificationCommand;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 

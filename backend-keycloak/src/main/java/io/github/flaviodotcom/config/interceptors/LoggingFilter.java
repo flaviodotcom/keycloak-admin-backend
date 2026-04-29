@@ -1,18 +1,19 @@
 package io.github.flaviodotcom.config.interceptors;
 
-import io.quarkus.logging.Log;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.ext.Provider;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Provider
 @PreMatching
 public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -28,12 +29,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         containerRequestContext.setProperty(CORRELATION_ID_PROPERTY, correlationId);
         containerRequestContext.setProperty(START_NANOS_PROPERTY, System.nanoTime());
 
-        Log.info("[Start Request - " +
-                "Timestamp: " + getNow() + " - " +
-                "CorrelationId: " + correlationId + " - " +
-                "Method: " + containerRequestContext.getMethod() + " - " +
-                "Path: " + containerRequestContext.getUriInfo().getPath() +
-                "]");
+        log.info("[Start Request - Timestamp: {} - CorrelationId: {} - Method: {} - Path: {}]",
+                getNow(),
+                correlationId,
+                containerRequestContext.getMethod(),
+                containerRequestContext.getUriInfo().getPath()
+        );
     }
 
     @Override
@@ -43,12 +44,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         var durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
         containerResponseContext.getHeaders().putSingle(CORRELATION_ID_HEADER, correlationId);
 
-        Log.info("[End Request - " +
-                "Timestamp: " + getNow() + " - " +
-                "CorrelationId: " + correlationId + " - " +
-                "Status: " + containerResponseContext.getStatus() + " - " +
-                "DurationMs: " + durationMillis +
-                "]");
+        log.info("[End Request - Timestamp: {} - CorrelationId: {} - Status: {} - DurationMs: {}]",
+                getNow(),
+                correlationId,
+                containerResponseContext.getStatus(),
+                durationMillis
+        );
     }
 
     private LocalDateTime getNow() {

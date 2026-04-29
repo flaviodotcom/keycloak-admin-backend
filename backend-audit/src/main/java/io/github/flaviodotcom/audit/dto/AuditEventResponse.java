@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.audit.dto;
 
-import io.github.flaviodotcom.audit.entity.AuditEvent;
+import io.github.flaviodotcom.audit.entities.AuditEvent;
 
 import java.time.OffsetDateTime;
 

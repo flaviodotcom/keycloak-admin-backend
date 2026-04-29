@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.service.notifications;
 
+import io.github.flaviodotcom.config.properties.NotificationProperties;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
@@ -26,7 +27,8 @@ class UserNotificationServiceTest {
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
         var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, false);
+        var notificationProperties = notificationProperties(false);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, notificationProperties);
 
         service.sendUpdatePasswordEmail("user-1");
 
@@ -41,7 +43,8 @@ class UserNotificationServiceTest {
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
         var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, true);
+        var notificationProperties = notificationProperties(true);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, notificationProperties);
 
         when(identityUserGateway.findUserById("user-1")).thenReturn(user("user-1", "maria.teste", "maria@example.com", "Maria"));
         when(actorResolver.resolve()).thenReturn("admin@example.com");
@@ -68,7 +71,8 @@ class UserNotificationServiceTest {
         var notificationCommandPublisher = mock(NotificationCommandPublisher.class);
         var actorResolver = mock(RequestActorResolver.class);
         var correlationIdResolver = mock(RequestCorrelationIdResolver.class);
-        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, true);
+        var notificationProperties = notificationProperties(true);
+        var service = service(identityUserGateway, identityUserActionGateway, notificationCommandPublisher, actorResolver, correlationIdResolver, notificationProperties);
 
         when(identityUserGateway.findUserById("user-1")).thenReturn(user("user-1", "maria.teste", null, "Maria"));
 
@@ -83,17 +87,28 @@ class UserNotificationServiceTest {
                                                    NotificationCommandPublisher notificationCommandPublisher,
                                                    RequestActorResolver actorResolver,
                                                    RequestCorrelationIdResolver correlationIdResolver,
-                                                   boolean notificationCommandsEnabled) {
+                                                   NotificationProperties notificationProperties) {
         return new UserNotificationService(
                 identityUserGateway,
                 identityUserActionGateway,
                 notificationCommandPublisher,
                 actorResolver,
                 correlationIdResolver,
-                notificationCommandsEnabled,
-                "Update your password",
-                "Hello {0}, update your password."
+                notificationProperties
         );
+    }
+
+    private static NotificationProperties notificationProperties(boolean notificationCommandsEnabled) {
+        var commands = mock(NotificationProperties.Commands.class);
+        var updatePassword = mock(NotificationProperties.UpdatePassword.class);
+        var properties = mock(NotificationProperties.class);
+
+        when(commands.enabled()).thenReturn(notificationCommandsEnabled);
+        when(updatePassword.subject()).thenReturn("Update your password");
+        when(updatePassword.textBody()).thenReturn("Hello {0}, update your password.");
+        when(properties.commands()).thenReturn(commands);
+        when(properties.updatePassword()).thenReturn(updatePassword);
+        return properties;
     }
 
     private static IdentityUser user(String id, String username, String email, String firstName) {

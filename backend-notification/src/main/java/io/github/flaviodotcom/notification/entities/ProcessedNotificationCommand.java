@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.notification.entity;
+package io.github.flaviodotcom.notification.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;

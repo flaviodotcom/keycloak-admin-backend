@@ -38,7 +38,7 @@ domain/validation/      Contract and business validation
 infrastructure/kafka/   Kafka consumers and publishers
 infrastructure/mailer/  Quarkus Mailer adapter
 repository/             Panache repositories
-entity/                 JPA persistence entities
+entities/               JPA persistence entities
 dto/                    Public request/response/event contracts
 health/                 Health checks
 ```

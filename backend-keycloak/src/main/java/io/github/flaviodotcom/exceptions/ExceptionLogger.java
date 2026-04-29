@@ -1,7 +1,8 @@
 package io.github.flaviodotcom.exceptions;
 
-import io.quarkus.logging.Log;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class ExceptionLogger {
 
     private ExceptionLogger() {
@@ -9,10 +10,10 @@ public final class ExceptionLogger {
 
     public static void log(Throwable exception, int status) {
         if (status >= 500) {
-            Log.error(exception.getMessage(), exception);
+            log.error(exception.getMessage(), exception);
             return;
         }
 
-        Log.warn(exception.getMessage(), exception);
+        log.warn(exception.getMessage(), exception);
     }
 }

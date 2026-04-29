@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.service.notifications;
 
+import io.github.flaviodotcom.config.properties.NotificationProperties;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserActionGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
@@ -8,7 +9,6 @@ import io.github.flaviodotcom.service.events.RequestActorResolver;
 import io.github.flaviodotcom.service.events.RequestCorrelationIdResolver;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -24,18 +24,10 @@ public class UserNotificationService {
     private final NotificationCommandPublisher notificationCommandPublisher;
     private final RequestActorResolver actorResolver;
     private final RequestCorrelationIdResolver correlationIdResolver;
-
-    @ConfigProperty(name = "notification.commands.enabled")
-    private final boolean notificationCommandsEnabled;
-
-    @ConfigProperty(name = "notification.update-password.subject")
-    private final String updatePasswordSubject;
-
-    @ConfigProperty(name = "notification.update-password.text-body")
-    private final String updatePasswordTextBody;
+    private final NotificationProperties notificationProperties;
 
     public void sendUpdatePasswordEmail(String userId) {
-        if (!this.notificationCommandsEnabled) {
+        if (!this.notificationProperties.commands().enabled()) {
             this.identityUserActionGateway.sendUpdatePasswordEmail(userId);
             return;
         }
@@ -55,8 +47,8 @@ public class UserNotificationService {
                 List.of(user.email()),
                 List.of(),
                 List.of(),
-                this.updatePasswordSubject,
-                MessageFormat.format(this.updatePasswordTextBody, this.displayName(user)),
+                this.notificationProperties.updatePassword().subject(),
+                MessageFormat.format(this.notificationProperties.updatePassword().textBody(), this.displayName(user)),
                 null,
                 List.of(),
                 Map.of(

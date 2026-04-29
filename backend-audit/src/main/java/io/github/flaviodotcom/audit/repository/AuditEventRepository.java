@@ -1,6 +1,6 @@
 package io.github.flaviodotcom.audit.repository;
 
-import io.github.flaviodotcom.audit.entity.AuditEvent;
+import io.github.flaviodotcom.audit.entities.AuditEvent;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 

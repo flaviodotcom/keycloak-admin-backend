@@ -1,4 +1,4 @@
-package io.github.flaviodotcom.audit.entity;
+package io.github.flaviodotcom.audit.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;
