@@ -121,6 +121,32 @@ services:
     ports:
       - "8081:8081"
 
+  backend-keycloak-kafka:
+    build:
+      context: ./backend-keycloak
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-keycloak:1.0.0
+    container_name: backend-keycloak-kafka
+    profiles:
+      - kafka-enabled
+    depends_on:
+      keycloak:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: user-management
+      KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin
+      KEYCLOAK_ADMIN_CLIENT_SECRET: change-me
+      KEYCLOAK_OIDC_CLIENT_ID: backend-users
+      KEYCLOAK_OIDC_CLIENT_SECRET: change-me
+      IDENTITY_EVENTS_ENABLED: "true"
+      NOTIFICATION_COMMANDS_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8081:8081"
+
   backend-audit:
     build:
       context: ./backend-audit
@@ -129,6 +155,7 @@ services:
     container_name: backend-audit
     profiles:
       - audit
+      - kafka-enabled
     depends_on:
       kafka:
         condition: service_healthy
@@ -150,6 +177,7 @@ services:
     container_name: backend-notification
     profiles:
       - notification
+      - kafka-enabled
     depends_on:
       kafka:
         condition: service_healthy

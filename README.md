@@ -111,6 +111,18 @@ Start the whole local platform:
 docker compose --profile admin --profile audit --profile notification up
 ```
 
+Start the local platform with Kafka enabled in the admin backend:
+
+```shell
+docker compose --profile kafka-enabled up --build
+```
+
+This starts the admin backend with `IDENTITY_EVENTS_ENABLED=true` and
+`NOTIFICATION_COMMANDS_ENABLED=true`, plus Kafka, audit, notification,
+PostgreSQL, Mailpit and Keycloak. In this mode, identity mutations publish
+`identity.events`, and update-password e-mail actions publish
+`notification.commands`.
+
 Mailpit is exposed at:
 
 ```text
