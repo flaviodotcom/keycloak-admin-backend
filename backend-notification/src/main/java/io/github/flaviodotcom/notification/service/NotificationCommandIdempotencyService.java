@@ -2,7 +2,11 @@ package io.github.flaviodotcom.notification.service;
 
 public interface NotificationCommandIdempotencyService {
 
-    boolean startProcessing(String commandId);
+    boolean enqueue(String commandId);
+
+    void markProcessing(String commandId);
+
+    void markQueued(String commandId, String errorMessage);
 
     void markSent(String commandId);
 

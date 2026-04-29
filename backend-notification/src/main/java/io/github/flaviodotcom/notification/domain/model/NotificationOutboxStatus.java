@@ -1,7 +1,7 @@
 package io.github.flaviodotcom.notification.domain.model;
 
-public enum NotificationCommandStatus {
-    QUEUED,
+public enum NotificationOutboxStatus {
+    PENDING,
     PROCESSING,
     SENT,
     FAILED

@@ -18,18 +18,19 @@ public class NotificationCommandIdempotencyServiceImpl implements NotificationCo
 
     @Override
     @Transactional
-    public boolean startProcessing(String commandId) {
+    public boolean enqueue(String commandId) {
         var now = OffsetDateTime.now();
         var existingCommand = this.repository.findByCommandId(commandId);
 
         if (existingCommand.isPresent()) {
             var command = existingCommand.get();
             if (NotificationCommandStatus.SENT.name().equals(command.status)
-                    || NotificationCommandStatus.PROCESSING.name().equals(command.status)) {
+                    || NotificationCommandStatus.PROCESSING.name().equals(command.status)
+                    || NotificationCommandStatus.QUEUED.name().equals(command.status)) {
                 return false;
             }
 
-            command.status = NotificationCommandStatus.PROCESSING.name();
+            command.status = NotificationCommandStatus.QUEUED.name();
             command.updatedAt = now;
             command.errorMessage = null;
             return true;
@@ -37,11 +38,31 @@ public class NotificationCommandIdempotencyServiceImpl implements NotificationCo
 
         var command = new ProcessedNotificationCommand();
         command.commandId = commandId;
-        command.status = NotificationCommandStatus.PROCESSING.name();
+        command.status = NotificationCommandStatus.QUEUED.name();
         command.createdAt = now;
         command.updatedAt = now;
         this.repository.persist(command);
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void markProcessing(String commandId) {
+        var command = this.repository.findByCommandId(commandId)
+                .orElseThrow(() -> new IllegalStateException("Notification command was not registered before marking as processing."));
+        command.status = NotificationCommandStatus.PROCESSING.name();
+        command.updatedAt = OffsetDateTime.now();
+        command.errorMessage = null;
+    }
+
+    @Override
+    @Transactional
+    public void markQueued(String commandId, String errorMessage) {
+        var command = this.repository.findByCommandId(commandId)
+                .orElseThrow(() -> new IllegalStateException("Notification command was not registered before marking as queued."));
+        command.status = NotificationCommandStatus.QUEUED.name();
+        command.updatedAt = OffsetDateTime.now();
+        command.errorMessage = errorMessage;
     }
 
     @Override

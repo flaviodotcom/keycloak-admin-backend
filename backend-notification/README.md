@@ -9,15 +9,20 @@ SMTP through `quarkus-mailer` and publishes the result to `notification.events`.
 ## Responsibilities
 
 - Consume `notification.commands`.
+- Persist valid commands in a PostgreSQL-backed e-mail outbox before executing
+  SMTP delivery.
 - Send generic e-mails to `to`, `cc` and `bcc` recipients.
 - Support text body, HTML body and base64 attachments.
 - Require e-mail commands to include `schemaVersion=1`.
 - Require and propagate `correlationId` for cross-service troubleshooting.
-- Persist processed `commandId` values in PostgreSQL to avoid resending e-mails
-  when Kafka reprocesses a command already marked as sent or in progress.
+- Persist processed `commandId` values in PostgreSQL to avoid enqueueing or
+  resending e-mails when Kafka reprocesses a command already queued, in
+  progress or sent.
 - Publish `notification.email.sent` after a successful send.
-- Publish `notification.email.failed` when SMTP delivery fails, then propagate
-  the original error so Kafka retry/DLQ can handle the failed command.
+- Retry SMTP delivery automatically when it fails.
+- Publish `notification.email.failed` when SMTP delivery exhausts all retry
+  attempts, mark the outbox entry as failed and propagate the original error to
+  the scheduler logs.
 - Serve a dedicated static OpenAPI contract at `/openapi`.
 - Expose liveness and readiness checks. Readiness validates PostgreSQL, Kafka
   and SMTP connectivity. When `quarkus.mailer.mock=true`, SMTP readiness reports
@@ -40,6 +45,7 @@ domain/model/           Domain enums and value types
 domain/validation/      Contract and business validation
 infrastructure/kafka/   Kafka consumers and publishers
 infrastructure/mailer/  Quarkus Mailer adapter
+infrastructure/scheduler/ Background outbox trigger
 repository/             Panache repositories
 entities/               JPA persistence entities
 dto/                    Public request/response/event contracts
@@ -78,7 +84,30 @@ Kafka integration tests use Testcontainers and are disabled by default:
 
 ## Idempotency And Outbox
 
-The current idempotency table prevents re-sending commands that are already
-marked as `SENT` or `PROCESSING`. A stricter transactional outbox strategy is
-documented in
-[backend notification outbox](../docs/plans/2026-04-29-backend-notification-outbox.md).
+The notification flow is split into two steps:
+
+1. A REST request or Kafka message validates the command and stores both the
+   command idempotency state and the e-mail outbox row in the same database
+   transaction.
+2. A scheduled worker claims pending outbox rows with `FOR UPDATE SKIP LOCKED`,
+   sends the e-mail, updates the persisted state and publishes the notification
+   result event.
+
+This means Kafka reprocessing does not resend an e-mail that is already queued,
+being processed or sent. Invalid command payloads still fail before being stored
+and continue to use Kafka DLQ behavior.
+
+Outbox processing is configured with:
+
+```properties
+notification.outbox.batch-size=10
+notification.outbox.processing-interval=2s
+notification.outbox.max-attempts=3
+notification.outbox.retry-delay=30s
+```
+
+When an SMTP attempt fails before `max-attempts`, the outbox row returns to
+`PENDING` with `next_attempt_at` set from `retry-delay`. The scheduler still
+logs and propagates the original error for visibility. When attempts are
+exhausted, the row becomes `FAILED` and the service publishes
+`notification.email.failed`.

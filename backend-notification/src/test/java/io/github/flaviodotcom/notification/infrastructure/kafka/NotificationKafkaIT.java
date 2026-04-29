@@ -81,7 +81,7 @@ class NotificationKafkaIT {
     }
 
     @Test
-    void givenNotificationCommandWithoutBody_WhenConsumed_ThenPublishFailedEventAndSendCommandToDlq() throws Exception {
+    void givenNotificationCommandWithoutBody_WhenConsumed_ThenSendCommandToDlq() throws Exception {
         var commandId = UUID.randomUUID().toString();
         var command = Map.of(
                 "commandId", commandId,
@@ -95,11 +95,8 @@ class NotificationKafkaIT {
 
         this.produce("notification.commands", commandId, JSON.writeValueAsString(command));
 
-        var event = this.awaitNotificationEvent(commandId);
         var dlqPayload = this.awaitRecord("notification.commands.dlq", commandId);
 
-        assertEquals("notification.email.failed", event.get("eventType").asText());
-        assertEquals("correlation-failed-it", event.get("correlationId").asText());
         assertEquals(commandId, JSON.readTree(dlqPayload).get("commandId").asText());
     }
 
