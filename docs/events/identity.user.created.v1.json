@@ -1,0 +1,18 @@
+{
+  "eventId": "6d7f02e8-87ef-4e72-905d-82f16b031612",
+  "schemaVersion": 1,
+  "eventType": "identity.user.created",
+  "source": "backend-keycloak",
+  "actor": {
+    "id": "admin@example.com"
+  },
+  "subject": {
+    "type": "user",
+    "id": "keycloak-user-id"
+  },
+  "occurredAt": "2026-04-29T10:00:00-03:00",
+  "data": {
+    "username": "maria.teste",
+    "email": "maria.teste@example.com"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "commandId": "5fbe70de-c6c7-4a9e-bd60-974c32dafba4",
+  "schemaVersion": 1,
+  "requestedBy": "admin@example.com",
+  "from": "no-reply@example.com",
+  "to": [
+    "maria.teste@example.com"
+  ],
+  "cc": [],
+  "bcc": [],
+  "subject": "Update your password",
+  "textBody": "Hello Maria, update your password.",
+  "htmlBody": null,
+  "attachments": [],
+  "metadata": {
+    "notificationType": "update-password",
+    "userId": "keycloak-user-id"
+  }
+}

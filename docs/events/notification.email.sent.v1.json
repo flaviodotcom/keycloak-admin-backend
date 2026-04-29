@@ -1,0 +1,19 @@
+{
+  "eventId": "0222b8a1-c7d8-4a20-8e62-9638b0da4219",
+  "schemaVersion": 1,
+  "eventType": "notification.email.sent",
+  "source": "backend-notification",
+  "commandId": "5fbe70de-c6c7-4a9e-bd60-974c32dafba4",
+  "actor": {
+    "id": "admin@example.com"
+  },
+  "recipients": [
+    "maria.teste@example.com"
+  ],
+  "occurredAt": "2026-04-29T10:00:05-03:00",
+  "errorMessage": null,
+  "metadata": {
+    "notificationType": "update-password",
+    "userId": "keycloak-user-id"
+  }
+}
