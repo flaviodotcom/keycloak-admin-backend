@@ -9,11 +9,10 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: myKeycloakAdminUser
       KC_BOOTSTRAP_ADMIN_PASSWORD: tops3cr3t
       KC_DB: dev-file
-      JAVA_TOOL_OPTIONS: >
-        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "8080:8080"
-      - "5005:5005"
+    volumes:
+      - ./config/keycloak/user-management-realm.json:/opt/keycloak/data/import/user-management-realm.json:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
       interval: 30s
@@ -112,9 +111,9 @@ services:
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: user-management
       KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin
-      KEYCLOAK_ADMIN_CLIENT_SECRET: change-me
-      KEYCLOAK_OIDC_CLIENT_ID: backend-users
-      KEYCLOAK_OIDC_CLIENT_SECRET: change-me
+      KEYCLOAK_ADMIN_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      KEYCLOAK_OIDC_CLIENT_ID: backend-keycloak
+      KEYCLOAK_OIDC_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
       IDENTITY_EVENTS_ENABLED: "false"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
@@ -137,9 +136,9 @@ services:
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: user-management
       KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin
-      KEYCLOAK_ADMIN_CLIENT_SECRET: change-me
-      KEYCLOAK_OIDC_CLIENT_ID: backend-users
-      KEYCLOAK_OIDC_CLIENT_SECRET: change-me
+      KEYCLOAK_ADMIN_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      KEYCLOAK_OIDC_CLIENT_ID: backend-keycloak
+      KEYCLOAK_OIDC_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
       IDENTITY_EVENTS_ENABLED: "true"
       NOTIFICATION_COMMANDS_ENABLED: "true"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092

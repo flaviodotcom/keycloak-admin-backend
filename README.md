@@ -79,6 +79,21 @@ http://localhost:8081/openapi
 
 ## Local Compose
 
+The local Compose setup imports an example Keycloak realm from
+`config/keycloak/user-management-realm.json`. This realm is intentionally
+committed with development secrets so new users can run and test the platform
+quickly. Do not reuse these values in real environments.
+
+Example realm values:
+
+```shell
+KEYCLOAK_REALM=user-management
+KEYCLOAK_ADMIN_CLIENT_ID=backend-keycloak-admin
+KEYCLOAK_ADMIN_CLIENT_SECRET="X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45"
+KEYCLOAK_OIDC_CLIENT_ID=backend-keycloak
+KEYCLOAK_OIDC_CLIENT_SECRET="X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45"
+```
+
 Start the platform dependencies:
 
 ```shell
@@ -98,6 +113,18 @@ Start the admin backend with Compose:
 ```shell
 docker compose --profile admin up backend-keycloak
 ```
+
+Start the local platform without Kafka event/command publication:
+
+```shell
+docker compose --profile admin up --build
+```
+
+This starts Keycloak, Kafka as a dependency, and `backend-keycloak` with
+`IDENTITY_EVENTS_ENABLED=false` and `NOTIFICATION_COMMANDS_ENABLED=false`.
+Kafka is still started because the local compose service depends on it, but the
+admin backend does not publish identity events or notification commands in this
+mode. Update-password e-mail actions use Keycloak's own e-mail action flow.
 
 Start audit and notification services:
 
@@ -122,6 +149,14 @@ This starts the admin backend with `IDENTITY_EVENTS_ENABLED=true` and
 PostgreSQL, Mailpit and Keycloak. In this mode, identity mutations publish
 `identity.events`, and update-password e-mail actions publish
 `notification.commands`.
+
+If you previously started Keycloak before the example realm was mounted, remove
+the old container before starting again:
+
+```shell
+docker compose down
+docker compose --profile kafka-enabled up --build
+```
 
 Mailpit is exposed at:
 

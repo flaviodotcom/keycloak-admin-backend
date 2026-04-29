@@ -121,7 +121,7 @@ Keycloak configuration can be supplied through environment variables:
 | `keycloak.realm` | `KEYCLOAK_REALM` | `user-management` |
 | `quarkus.keycloak.admin-client.client-id` | `KEYCLOAK_ADMIN_CLIENT_ID` | `backend-keycloak-admin` |
 | `quarkus.keycloak.admin-client.client-secret` | `KEYCLOAK_ADMIN_CLIENT_SECRET` | local development secret |
-| `quarkus.oidc.client-id` | `KEYCLOAK_OIDC_CLIENT_ID` | `backend-users` |
+| `quarkus.oidc.client-id` | `KEYCLOAK_OIDC_CLIENT_ID` | `backend-keycloak` |
 | `quarkus.oidc.credentials.secret` | `KEYCLOAK_OIDC_CLIENT_SECRET` | local development secret |
 | `identity.events.enabled` | `IDENTITY_EVENTS_ENABLED` | `false` |
 | `notification.commands.enabled` | `NOTIFICATION_COMMANDS_ENABLED` | `false` |
