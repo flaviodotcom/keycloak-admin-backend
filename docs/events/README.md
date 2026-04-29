@@ -32,9 +32,12 @@ messages without `schemaVersion` or with an unsupported version.
 - `actor.id` identifies who requested the operation when available.
 - Consumers do not apply alternate compatibility paths. Invalid messages fail
   and are handled by Kafka retry/DLQ behavior.
-- `backend-notification` stores processed command ids in PostgreSQL. Commands
-  already marked as `SENT` or `PROCESSING` are acknowledged without sending the
-  e-mail again; commands marked as `FAILED` can be retried by Kafka.
+- `backend-notification` stores processed command ids and e-mail outbox rows in
+  PostgreSQL. Commands already marked as `QUEUED`, `PROCESSING` or `SENT` are
+  acknowledged without enqueueing or sending the e-mail again.
+- SMTP delivery failures are retried by the outbox worker until
+  `notification.outbox.max-attempts` is reached. `notification.email.failed` is
+  published only after retry attempts are exhausted.
 
 ## Current Payloads
 

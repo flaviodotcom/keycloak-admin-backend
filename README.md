@@ -20,6 +20,7 @@ backend-keycloak/   Current Keycloak admin API
 backend-audit/            Audit microservice
 backend-notification/     Notification microservice
 docs/plans/               Architecture and implementation plans
+docs/architecture/        C4 architecture diagrams
 docs/events/              Kafka event and command contracts
 docker-compose.yml        Local platform dependencies and services
 pom.xml                   Maven aggregator
@@ -156,12 +157,17 @@ authenticated principal can be used as the actor.
 When `NOTIFICATION_COMMANDS_ENABLED=true`, the admin backend publishes generic
 e-mail commands to `notification.commands` for supported notification actions.
 The update-password email endpoint uses this mode instead of Keycloak SMTP.
-`backend-notification` persists processed command ids in PostgreSQL so Kafka
-reprocessing does not resend e-mails for commands already marked as sent or in
-progress.
+`backend-notification` persists processed command ids and an e-mail outbox in
+PostgreSQL so Kafka reprocessing does not enqueue or send e-mails for commands
+already queued, in progress or sent. SMTP failures are retried by the outbox
+worker until `notification.outbox.max-attempts` is reached; only then is
+`notification.email.failed` published.
 
 See [identity-events architecture](docs/plans/2026-04-29-identity-events-architecture.md)
 for the detailed plan.
+
+See [C4 architecture diagrams](docs/architecture/c4.md) for the system context
+and container view.
 
 ## Service Documentation
 
