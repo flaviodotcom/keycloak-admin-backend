@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Backend Notification API
+  version: 1.0.0
+  description: Generic email notification service with Kafka command consumption and notification event publishing.
+servers:
+  - url: /api
+paths:
+  /v1/notifications/emails:
+    post:
+      summary: Send an email notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailNotificationCommand"
+      responses:
+        "200":
+          description: Notification command accepted and processed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        "400":
+          description: Invalid request data.
+components:
+  schemas:
+    EmailNotificationCommand:
+      type: object
+      required:
+        - commandId
+        - schemaVersion
+        - correlationId
+        - requestedBy
+        - to
+        - subject
+      properties:
+        commandId:
+          type: string
+          description: Idempotency key for the notification command.
+        schemaVersion:
+          type: integer
+          format: int32
+          example: 1
+        correlationId:
+          type: string
+        requestedBy:
+          type: string
+        from:
+          type: string
+          nullable: true
+        to:
+          type: array
+          items:
+            type: string
+            format: email
+        cc:
+          type: array
+          items:
+            type: string
+            format: email
+        bcc:
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          type: string
+        textBody:
+          type: string
+          nullable: true
+        htmlBody:
+          type: string
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    Attachment:
+      type: object
+      required:
+        - fileName
+        - contentType
+        - contentBase64
+      properties:
+        fileName:
+          type: string
+        contentType:
+          type: string
+        contentBase64:
+          type: string
+          format: byte
+    NotificationResponse:
+      type: object
+      properties:
+        commandId:
+          type: string

@@ -1,7 +1,7 @@
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
-    container_name: keycloak-admin-backend
+    container_name: keycloak-admin-platform
     command:
       - start-dev
       - --import-realm
@@ -9,15 +9,196 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: myKeycloakAdminUser
       KC_BOOTSTRAP_ADMIN_PASSWORD: tops3cr3t
       KC_DB: dev-file
-      JAVA_TOOL_OPTIONS: >
-        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "8080:8080"
-      - "5005:5005"
+    volumes:
+      - ./config/keycloak/user-management-realm.json:/opt/keycloak/data/import/user-management-realm.json:ro
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
+
+  kafka:
+    image: apache/kafka-native:3.8.0
+    container_name: keycloak-admin-platform-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+    ports:
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: keycloak-admin-platform-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8084:8080"
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: keycloak-admin-platform-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  postgres-audit:
+    image: postgres:16
+    container_name: keycloak-admin-platform-postgres-audit
+    environment:
+      POSTGRES_DB: audit
+      POSTGRES_USER: audit
+      POSTGRES_PASSWORD: audit
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-audit-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audit -d audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres-notification:
+    image: postgres:16
+    container_name: keycloak-admin-platform-postgres-notification
+    environment:
+      POSTGRES_DB: notification
+      POSTGRES_USER: notification
+      POSTGRES_PASSWORD: notification
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend-keycloak:
+    build:
+      context: ./backend-keycloak
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-keycloak:1.0.0
+    container_name: backend-keycloak
+    profiles:
+      - admin
+    depends_on:
+      keycloak:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: user-management
+      KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin
+      KEYCLOAK_ADMIN_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      KEYCLOAK_OIDC_CLIENT_ID: backend-keycloak
+      KEYCLOAK_OIDC_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      IDENTITY_EVENTS_ENABLED: "false"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8081:8081"
+
+  backend-keycloak-kafka:
+    build:
+      context: ./backend-keycloak
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-keycloak:1.0.0
+    container_name: backend-keycloak-kafka
+    profiles:
+      - kafka-enabled
+    depends_on:
+      keycloak:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: user-management
+      KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin
+      KEYCLOAK_ADMIN_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      KEYCLOAK_OIDC_CLIENT_ID: backend-keycloak
+      KEYCLOAK_OIDC_CLIENT_SECRET: X7NLxXxrI3EH4wP4gPqOqJ9E9bjgqD45
+      IDENTITY_EVENTS_ENABLED: "true"
+      NOTIFICATION_COMMANDS_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8081:8081"
+
+  backend-audit:
+    build:
+      context: ./backend-audit
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-audit:1.0.0
+    container_name: backend-audit
+    profiles:
+      - audit
+      - kafka-enabled
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres-audit:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AUDIT_DB_URL: jdbc:postgresql://postgres-audit:5432/audit
+      AUDIT_DB_USERNAME: audit
+      AUDIT_DB_PASSWORD: audit
+    ports:
+      - "8082:8082"
+
+  backend-notification:
+    build:
+      context: ./backend-notification
+      dockerfile: src/main/docker/Dockerfile.jvm
+    image: backend-notification:1.0.0
+    container_name: backend-notification
+    profiles:
+      - notification
+      - kafka-enabled
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+      postgres-notification:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres-notification:5432/notification
+      NOTIFICATION_DB_USERNAME: notification
+      NOTIFICATION_DB_PASSWORD: notification
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: no-reply@example.com
+    ports:
+      - "8083:8083"
+
+volumes:
+  postgres-audit-data:
+  postgres-notification-data:

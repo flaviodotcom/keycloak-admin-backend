@@ -1,0 +1,20 @@
+{
+  "eventId": "ee38ee2f-a4ab-4de3-8d3d-244f2b9b18b5",
+  "schemaVersion": 1,
+  "eventType": "notification.email.failed",
+  "source": "backend-notification",
+  "commandId": "5fbe70de-c6c7-4a9e-bd60-974c32dafba4",
+  "correlationId": "47f4d61e-5a3a-4d65-a6fb-81219c1a06a4",
+  "actor": {
+    "id": "admin@example.com"
+  },
+  "recipients": [
+    "maria.teste@example.com"
+  ],
+  "occurredAt": "2026-04-29T10:00:05-03:00",
+  "errorMessage": "Could not send email.",
+  "metadata": {
+    "notificationType": "update-password",
+    "userId": "keycloak-user-id"
+  }
+}
