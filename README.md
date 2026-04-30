@@ -230,6 +230,10 @@ for the detailed plan.
 See [C4 architecture diagrams](docs/architecture/c4.md) for the system context
 and container view.
 
+See [local Kafka testing guide](docs/local-kafka-testing.md) for a step-by-step
+developer tutorial that exercises identity events, notification commands,
+Mailpit and audit persistence.
+
 ## Service Documentation
 
 - [Admin backend](backend-keycloak/README.md)
