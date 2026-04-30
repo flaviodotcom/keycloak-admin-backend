@@ -126,7 +126,7 @@ Keycloak configuration can be supplied through environment variables:
 | `identity.events.enabled` | `IDENTITY_EVENTS_ENABLED` | `false` |
 | `notification.commands.enabled` | `NOTIFICATION_COMMANDS_ENABLED` | `false` |
 | `notification.update-password.subject` | `NOTIFICATION_UPDATE_PASSWORD_SUBJECT` | `Update your password` |
-| `notification.update-password.text-body` | `NOTIFICATION_UPDATE_PASSWORD_TEXT_BODY` | generic update-password message |
+| `notification.update-password.text-body` | `NOTIFICATION_UPDATE_PASSWORD_TEXT_BODY` | generic update-password message using `%DISPLAY_NAME%` as the display-name token |
 | `kafka.bootstrap.servers` | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:29092` |
 
 For real environments, provide secrets through environment variables or your

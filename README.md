@@ -158,6 +158,20 @@ docker compose down
 docker compose --profile kafka-enabled up --build
 ```
 
+If Docker Compose fails with an error similar to
+`network <id> not found`, remove old containers and the stale project network
+before starting the stack again:
+
+```shell
+docker compose down --remove-orphans
+docker rm -f backend-audit backend-notification backend-keycloak-kafka keycloak-admin-platform keycloak-admin-platform-kafka keycloak-admin-platform-kafka-ui keycloak-admin-platform-mailpit keycloak-admin-platform-postgres-audit keycloak-admin-platform-postgres-notification
+docker network rm backend-users_default
+docker compose --profile kafka-enabled up --build
+```
+
+If `docker network rm backend-users_default` reports that the network does not
+exist, continue with the final `docker compose` command.
+
 Mailpit is exposed at:
 
 ```text

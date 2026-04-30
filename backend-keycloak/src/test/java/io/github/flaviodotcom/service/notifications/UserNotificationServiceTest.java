@@ -105,7 +105,7 @@ class UserNotificationServiceTest {
 
         when(commands.enabled()).thenReturn(notificationCommandsEnabled);
         when(updatePassword.subject()).thenReturn("Update your password");
-        when(updatePassword.textBody()).thenReturn("Hello {0}, update your password.");
+        when(updatePassword.textBody()).thenReturn("Hello %DISPLAY_NAME%, update your password.");
         when(properties.commands()).thenReturn(commands);
         when(properties.updatePassword()).thenReturn(updatePassword);
         return properties;

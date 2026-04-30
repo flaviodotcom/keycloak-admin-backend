@@ -10,7 +10,6 @@ import io.github.flaviodotcom.service.events.RequestCorrelationIdResolver;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @ApplicationScoped
 public class UserNotificationService {
+
+    private static final String DISPLAY_NAME_TOKEN = "%DISPLAY_NAME%";
 
     private final IdentityUserGateway identityUserGateway;
     private final IdentityUserActionGateway identityUserActionGateway;
@@ -48,7 +49,7 @@ public class UserNotificationService {
                 List.of(),
                 List.of(),
                 this.notificationProperties.updatePassword().subject(),
-                MessageFormat.format(this.notificationProperties.updatePassword().textBody(), this.displayName(user)),
+                this.notificationProperties.updatePassword().textBody().replace(DISPLAY_NAME_TOKEN, this.displayName(user)),
                 null,
                 List.of(),
                 Map.of(
