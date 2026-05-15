@@ -10,9 +10,27 @@ the end-to-end Kafka flow:
 5. `backend-notification` sends e-mails through Mailpit and publishes
    notification result events.
 
+It uses **two independent profile systems**:
+
+- Docker Compose profiles → control which containers run
+- Quarkus profiles → control Kafka activation inside applications
+
+---
+
+## ⚠️ Important Concept
+
+| Layer | Purpose |
+|------|--------|
+| Docker Compose `--profile kafka-enabled` | Starts Kafka + services |
+| Quarkus `kafka` profile | Enables Kafka producers/consumers inside apps |
+
+👉 Both must be enabled for full Kafka flow.
+
+---
+
 ## Start The Platform
 
-Build the services and start the Kafka-enabled profile:
+Build the services and start the Kafka-en abled profile:
 
 ```shell
 ./mvnw package -DskipTests

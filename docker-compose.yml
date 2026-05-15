@@ -113,6 +113,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      QUARKUS_PROFILE: kafka
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: user-management
       KEYCLOAK_ADMIN_CLIENT_ID: backend-keycloak-admin

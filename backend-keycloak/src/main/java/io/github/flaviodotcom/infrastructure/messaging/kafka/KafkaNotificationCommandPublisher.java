@@ -1,9 +1,10 @@
-package io.github.flaviodotcom.infrastructure.kafka;
+package io.github.flaviodotcom.infrastructure.messaging.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.flaviodotcom.service.notifications.EmailNotificationCommand;
 import io.github.flaviodotcom.service.notifications.NotificationCommandPublisher;
+import io.quarkus.arc.profile.IfBuildProfile;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 
 @Slf4j
+@IfBuildProfile("kafka")
 @AllArgsConstructor
 @ApplicationScoped
 public class KafkaNotificationCommandPublisher implements NotificationCommandPublisher {
