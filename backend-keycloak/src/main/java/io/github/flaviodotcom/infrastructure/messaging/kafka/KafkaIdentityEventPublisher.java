@@ -2,12 +2,11 @@ package io.github.flaviodotcom.infrastructure.messaging.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.flaviodotcom.config.properties.IdentityEventProperties;
+import io.github.flaviodotcom.infrastructure.messaging.qualifiers.KafkaPublisher;
 import io.github.flaviodotcom.service.events.IdentityEvent;
 import io.github.flaviodotcom.service.events.IdentityEventPublisher;
 import io.github.flaviodotcom.service.events.RequestActorResolver;
 import io.github.flaviodotcom.service.events.RequestCorrelationIdResolver;
-import io.quarkus.arc.profile.IfBuildProfile;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
-@IfBuildProfile("kafka")
+@KafkaPublisher
 @AllArgsConstructor
 @ApplicationScoped
 public class KafkaIdentityEventPublisher implements IdentityEventPublisher {
@@ -29,17 +28,12 @@ public class KafkaIdentityEventPublisher implements IdentityEventPublisher {
     private final ObjectMapper objectMapper;
     private final RequestActorResolver actorResolver;
     private final RequestCorrelationIdResolver correlationIdResolver;
-    private final IdentityEventProperties properties;
 
     @Channel("identity-events")
     private final Emitter<String> identityEvents;
 
     @Override
     public void publish(String eventType, String subjectType, String subjectId, Map<String, Object> data) {
-        if (!this.properties.enabled()) {
-            return;
-        }
-
         var event = new IdentityEvent(
                 UUID.randomUUID().toString(),
                 1,
