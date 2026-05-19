@@ -6,25 +6,29 @@ import io.github.flaviodotcom.infrastructure.messaging.qualifiers.NoOpPublisher;
 import io.github.flaviodotcom.service.events.IdentityEventPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class IdentityEventPublisherProducer {
 
-    @Inject
-    IdentityEventProperties properties;
+    private final IdentityEventProperties properties;
+    private final IdentityEventPublisher kafkaPublisher;
+    private final IdentityEventPublisher noopPublisher;
 
-    @Inject
-    @KafkaPublisher
-    IdentityEventPublisher kafkaPublisher;
-
-    @Inject
-    @NoOpPublisher
-    IdentityEventPublisher noopPublisher;
+    public IdentityEventPublisherProducer(
+            IdentityEventProperties properties,
+            @KafkaPublisher IdentityEventPublisher kafkaPublisher,
+            @NoOpPublisher IdentityEventPublisher noopPublisher
+    ) {
+        this.properties = properties;
+        this.kafkaPublisher = kafkaPublisher;
+        this.noopPublisher = noopPublisher;
+    }
 
     @Produces
     @ApplicationScoped
     public IdentityEventPublisher produce() {
-        return properties.enabled() ? kafkaPublisher : noopPublisher;
+        return properties.enabled()
+                ? kafkaPublisher
+                : noopPublisher;
     }
 }

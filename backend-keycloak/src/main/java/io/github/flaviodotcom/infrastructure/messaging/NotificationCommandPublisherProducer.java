@@ -6,25 +6,29 @@ import io.github.flaviodotcom.infrastructure.messaging.qualifiers.NoOpPublisher;
 import io.github.flaviodotcom.service.notifications.NotificationCommandPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class NotificationCommandPublisherProducer {
 
-    @Inject
-    NotificationProperties properties;
+    private final NotificationProperties properties;
+    private final NotificationCommandPublisher kafkaPublisher;
+    private final NotificationCommandPublisher noopPublisher;
 
-    @Inject
-    @KafkaPublisher
-    NotificationCommandPublisher kafkaPublisher;
-
-    @Inject
-    @NoOpPublisher
-    NotificationCommandPublisher noopPublisher;
+    public NotificationCommandPublisherProducer(
+            NotificationProperties properties,
+            @KafkaPublisher NotificationCommandPublisher kafkaPublisher,
+            @NoOpPublisher NotificationCommandPublisher noopPublisher
+    ) {
+        this.properties = properties;
+        this.kafkaPublisher = kafkaPublisher;
+        this.noopPublisher = noopPublisher;
+    }
 
     @Produces
     @ApplicationScoped
     public NotificationCommandPublisher produce() {
-        return properties.commands().enabled() ? kafkaPublisher : noopPublisher;
+        return properties.commands().enabled()
+                ? kafkaPublisher
+                : noopPublisher;
     }
 }
