@@ -12,17 +12,9 @@ the end-to-end Kafka flow:
 
 ---
 
-## ⚠️ Important Concept
-
-| Layer | Purpose |
-|------|--------|
-| Docker Compose `--profile kafka-enabled` | Starts Kafka + services |
-
----
-
 ## Start The Platform
 
-Build the services and start the Kafka-en abled profile:
+Build the services and start the Kafka-enabled profile:
 
 ```shell
 ./mvnw package -DskipTests
