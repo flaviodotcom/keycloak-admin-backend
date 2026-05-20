@@ -1,12 +1,12 @@
 package io.github.flaviodotcom.infrastructure.messaging.noop;
 
+import io.github.flaviodotcom.infrastructure.messaging.qualifiers.NoOpPublisher;
 import io.github.flaviodotcom.service.events.IdentityEventPublisher;
-import io.quarkus.arc.profile.UnlessBuildProfile;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Map;
 
-@UnlessBuildProfile("kafka")
+@NoOpPublisher
 @ApplicationScoped
 public class NoOpIdentityEventPublisher implements IdentityEventPublisher {
     @Override

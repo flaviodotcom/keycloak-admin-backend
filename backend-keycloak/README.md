@@ -67,6 +67,8 @@ infrastructure/keycloak/cache
                            Keycloak lookup caches
 infrastructure/keycloak/resilience
                            Timeout, circuit breaker and bulkhead execution boundary
+infrastructure/messaging/  Event publishing infrastructure, Kafka adapters,
+                           CDI producers and noop fallbacks
 dto/                       Public request and response DTOs grouped by context
 exceptions/                Problem response handling
 i18n/                      Locale resolution and message bundle access
