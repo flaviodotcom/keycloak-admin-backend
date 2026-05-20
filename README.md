@@ -215,10 +215,18 @@ events after user, group and role create/update/delete operations. In that mode,
 requests must include `X-Actor-Id` unless the API is protected by OIDC and the
 authenticated principal can be used as the actor.
 
+In that mode, requests must include `X-Actor-Id` unless the API is protected by
+OIDC and the authenticated principal can be used as the actor. Header validation
+is enforced through request filters bound with `@RequireActorHeader`.
+
+The interceptor layer publishes events only after the operation completes
+successfully, avoiding event emission for failed transactions or validation
+errors.
+
 When `NOTIFICATION_COMMANDS_ENABLED=true`, the admin backend publishes generic
 e-mail commands to `notification.commands` for supported notification actions.
 The update-password email endpoint uses this mode instead of Keycloak SMTP.
-`backend-notification` persists processed command ids and an e-mail outbox in
+The `backend-notification` persists processed command ids and an e-mail outbox in
 PostgreSQL so Kafka reprocessing does not enqueue or send e-mails for commands
 already queued, in progress or sent. SMTP failures are retried by the outbox
 worker until `notification.outbox.max-attempts` is reached; only then is
