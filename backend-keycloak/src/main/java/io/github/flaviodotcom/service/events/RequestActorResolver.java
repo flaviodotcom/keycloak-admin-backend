@@ -2,7 +2,6 @@ package io.github.flaviodotcom.service.events;
 
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.HttpHeaders;
 import lombok.AllArgsConstructor;
 
@@ -20,10 +19,6 @@ public class RequestActorResolver {
             return this.securityIdentity.getPrincipal().getName();
         }
 
-        var actorIds = this.headers.getRequestHeader(ACTOR_HEADER);
-        if (actorIds == null || actorIds.isEmpty() || actorIds.getFirst().isBlank()) {
-            throw new BadRequestException("%s header is required when identity events are enabled.".formatted(ACTOR_HEADER));
-        }
-        return actorIds.getFirst();
+        return this.headers.getHeaderString(ACTOR_HEADER);
     }
 }
