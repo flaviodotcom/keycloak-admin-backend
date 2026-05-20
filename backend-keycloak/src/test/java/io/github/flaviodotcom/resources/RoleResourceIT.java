@@ -1,8 +1,9 @@
 package io.github.flaviodotcom.resources;
 
-import io.github.flaviodotcom.domain.identity.model.IdentityRole;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.domain.identity.criteria.RoleSearchCriteria;
+import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityRole;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-class RoleResourceIT {
+class RoleResourceIT extends AbstractIntegrationTest {
 
     @InjectMock
     IdentityRoleGateway identityRoleGateway;

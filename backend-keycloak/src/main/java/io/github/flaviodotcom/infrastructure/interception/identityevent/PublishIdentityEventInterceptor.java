@@ -17,7 +17,6 @@ public class PublishIdentityEventInterceptor {
 
     @AroundInvoke
     public Object intercept(InvocationContext context) throws Exception {
-
         var result = context.proceed();
 
         var annotation = this.resolveAnnotation(context);
@@ -34,7 +33,6 @@ public class PublishIdentityEventInterceptor {
     }
 
     private PublishIdentityEvent resolveAnnotation(InvocationContext context) {
-
         var methodAnnotation = context.getMethod()
                 .getAnnotation(PublishIdentityEvent.class);
 

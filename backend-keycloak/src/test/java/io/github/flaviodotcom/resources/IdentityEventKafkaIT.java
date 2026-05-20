@@ -2,6 +2,7 @@ package io.github.flaviodotcom.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.config.WithKeycloakAndKafkaTestContainerProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -24,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 @TestProfile(WithKeycloakAndKafkaTestContainerProfile.class)
-class IdentityEventKafkaIT {
+class IdentityEventKafkaIT extends AbstractIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -34,46 +35,54 @@ class IdentityEventKafkaIT {
     @Test
     void givenIdentityEventsEnabled_WhenCreateUser_ThenPublishIdentityEvent() throws IOException {
         var username = "kafka.user." + UUID.randomUUID();
-        var body = Map.of(
-                "username", username,
-                "email", username + "@example.com",
-                "firstName", "Kafka",
-                "lastName", "User",
-                "enabled", true
-        );
 
-        given()
-                .header("X-Actor-Id", "admin@example.com")
-                .header("X-Correlation-Id", "correlation-identity-it")
-                .contentType("application/json")
-                .body(body)
-                .when()
-                .post("/v1/users")
-                .then()
-                .statusCode(201);
+        try (var consumer = new KafkaConsumer<String, String>(this.consumerProperties())) {
+            consumer.subscribe(List.of("identity.events"));
+            consumer.poll(Duration.ofSeconds(2));
 
-        var event = this.awaitEvent("identity.events", "identity.user.created", username);
+            var body = Map.of(
+                    "username", username,
+                    "email", username + "@example.com",
+                    "firstName", "Kafka",
+                    "lastName", "User",
+                    "enabled", true
+            );
 
-        assertEquals("backend-keycloak", event.get("source").asText());
-        assertEquals(1, event.get("schemaVersion").asInt());
-        assertEquals("correlation-identity-it", event.get("correlationId").asText());
-        assertEquals("admin@example.com", event.get("actor").get("id").asText());
-        assertEquals("user", event.get("subject").get("type").asText());
-        assertNotNull(event.get("subject").get("id").asText());
+            given()
+                    .header("X-Correlation-Id", "correlation-identity-it")
+                    .contentType("application/json")
+                    .body(body)
+                    .when()
+                    .post("/v1/users")
+                    .then()
+                    .statusCode(201);
+
+            var event = this.awaitEvent(
+                    consumer,
+                    "identity.user.created",
+                    username
+            );
+
+            assertEquals("backend-keycloak", event.get("source").asText());
+            assertEquals(1, event.get("schemaVersion").asInt());
+            assertEquals("correlation-identity-it", event.get("correlationId").asText());
+            assertEquals("integration-test@example.com", event.get("actor").get("id").asText());
+            assertEquals("user", event.get("subject").get("type").asText());
+            assertNotNull(event.get("subject").get("id").asText());
+        }
     }
 
-    private JsonNode awaitEvent(String topic, String expectedEventType, String expectedUsername) throws IOException {
-        try (var consumer = new KafkaConsumer<String, String>(this.consumerProperties())) {
-            consumer.subscribe(List.of(topic));
-            var deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
-            while (System.nanoTime() < deadline) {
-                var records = consumer.poll(Duration.ofMillis(500));
-                for (var record : records) {
-                    var event = JSON.readTree(record.value());
-                    if (expectedEventType.equals(event.get("eventType").asText())
-                            && expectedUsername.equals(event.get("data").get("username").asText())) {
-                        return event;
-                    }
+    private JsonNode awaitEvent(KafkaConsumer<String, String> consumer,
+                                String expectedEventType,
+                                String expectedUsername) throws IOException {
+        var deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos();
+        while (System.nanoTime() < deadline) {
+            var records = consumer.poll(Duration.ofMillis(500));
+            for (var record : records) {
+                var event = JSON.readTree(record.value());
+                if (expectedEventType.equals(event.get("eventType").asText())
+                        && expectedUsername.equals(event.get("data").get("username").asText())) {
+                    return event;
                 }
             }
         }

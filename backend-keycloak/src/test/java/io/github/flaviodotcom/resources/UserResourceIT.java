@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserSession;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-class UserResourceIT {
+class UserResourceIT extends AbstractIntegrationTest {
 
     @InjectMock
     IdentityUserGateway identityUserGateway;

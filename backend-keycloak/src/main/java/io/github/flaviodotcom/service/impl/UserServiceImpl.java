@@ -44,10 +44,10 @@ public class UserServiceImpl implements UserService {
         );
 
         return page.map(user -> UserResponse.fromIdentityUser(
-                        user,
-                        groupsByUserId.get(user.id()).stream()
-                                .map(UserGroupResponse::fromIdentityGroup)
-                                .toList()
+                user,
+                groupsByUserId.get(user.id()).stream()
+                        .map(UserGroupResponse::fromIdentityGroup)
+                        .toList()
         ));
     }
 

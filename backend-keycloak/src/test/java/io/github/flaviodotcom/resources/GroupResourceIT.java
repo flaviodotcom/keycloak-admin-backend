@@ -1,10 +1,11 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
-import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
+import io.github.flaviodotcom.domain.identity.model.IdentityGroup;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-class GroupResourceIT {
+class GroupResourceIT extends AbstractIntegrationTest {
 
     @InjectMock
     IdentityGroupGateway identityGroupGateway;

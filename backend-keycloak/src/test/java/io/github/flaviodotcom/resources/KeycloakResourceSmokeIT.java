@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.config.WithKeycloakTestContainerProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -9,16 +10,11 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
 @TestProfile(WithKeycloakTestContainerProfile.class)
-class KeycloakResourceSmokeIT {
+class KeycloakResourceSmokeIT extends AbstractIntegrationTest {
 
     private static final String RUN_ID = UUID.randomUUID().toString().substring(0, 8);
     private static final String USERNAME = "it-user-" + RUN_ID;
