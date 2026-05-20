@@ -2,6 +2,7 @@ package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.dto.group.CreateGroupRequest;
 import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
+import io.github.flaviodotcom.infrastructure.interception.identityevent.RequireActorHeader;
 import io.github.flaviodotcom.resources.query.GroupQueryCriteriaMapper;
 import io.github.flaviodotcom.service.GroupService;
 import jakarta.validation.Valid;
@@ -51,6 +52,7 @@ public class GroupResource {
     }
 
     @POST
+    @RequireActorHeader
     @Operation(summary = "Create a group")
     public Response createGroup(@Valid CreateGroupRequest request, @Context UriInfo uriInfo) {
         var createdGroup = this.groupService.createGroup(request);
@@ -60,6 +62,7 @@ public class GroupResource {
 
     @PUT
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Update a group")
     public Response updateGroup(@PathParam("id") String id, @Valid UpdateGroupRequest request) {
         return Response.ok(this.groupService.updateGroup(id, request)).build();
@@ -67,6 +70,7 @@ public class GroupResource {
 
     @DELETE
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Delete a group")
     public Response deleteGroup(@PathParam("id") String id) {
         this.groupService.deleteGroup(id);

@@ -7,6 +7,7 @@ import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
 import io.github.flaviodotcom.dto.user.UserResponse;
+import io.github.flaviodotcom.infrastructure.interception.contracts.DeletedSubjectPayload;
 
 public interface GroupService {
 
@@ -20,7 +21,7 @@ public interface GroupService {
 
     GroupResponse updateGroup(String id, UpdateGroupRequest request);
 
-    void deleteGroup(String id);
+    DeletedSubjectPayload deleteGroup(String id);
 
     void assignRealmRole(String id, String roleName);
 

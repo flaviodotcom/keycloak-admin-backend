@@ -1,32 +1,20 @@
 package io.github.flaviodotcom.service.impl;
 
 import io.github.flaviodotcom.domain.identity.criteria.UserSearchCriteria;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityCredentialGateway;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
-import io.github.flaviodotcom.domain.identity.gateway.IdentitySessionGateway;
-import io.github.flaviodotcom.domain.identity.gateway.IdentityUserGateway;
+import io.github.flaviodotcom.domain.identity.gateway.*;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
-import io.github.flaviodotcom.dto.user.CreateUserRequest;
-import io.github.flaviodotcom.dto.user.PatchUserRequest;
-import io.github.flaviodotcom.dto.user.RequiredActionsRequest;
-import io.github.flaviodotcom.dto.user.ResetPasswordRequest;
-import io.github.flaviodotcom.dto.user.UpdateUserRequest;
-import io.github.flaviodotcom.dto.user.UserGroupResponse;
-import io.github.flaviodotcom.dto.user.UserResponse;
-import io.github.flaviodotcom.dto.user.UserResponseOptions;
-import io.github.flaviodotcom.dto.user.UserSessionResponse;
+import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
+import io.github.flaviodotcom.dto.user.*;
+import io.github.flaviodotcom.infrastructure.interception.contracts.DeletedSubjectPayload;
+import io.github.flaviodotcom.infrastructure.interception.identityevent.PublishIdentityEvent;
 import io.github.flaviodotcom.service.UserService;
-import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
-import io.github.flaviodotcom.service.events.IdentityEventPublisher;
 import io.github.flaviodotcom.service.notifications.UserNotificationService;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -37,7 +25,6 @@ public class UserServiceImpl implements UserService {
     private final IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
     private final IdentityCredentialGateway identityCredentialGateway;
     private final IdentitySessionGateway identitySessionGateway;
-    private final IdentityEventPublisher identityEventPublisher;
     private final UserNotificationService userNotificationService;
 
     @Override
@@ -80,45 +67,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PublishIdentityEvent(
+            eventType = "identity.user.created",
+            subjectType = "user"
+    )
     public UserResponse createUser(CreateUserRequest request) {
         var user = this.identityUserGateway.createUser(request.toCommand());
-        this.identityEventPublisher.publish(
-                "identity.user.created",
-                "user",
-                user.id(),
-                Map.of("username", user.username())
-        );
         return UserResponse.fromIdentityUser(user);
     }
 
     @Override
+    @PublishIdentityEvent(
+            eventType = "identity.user.updated",
+            subjectType = "user"
+    )
     public UserResponse updateUser(String id, UpdateUserRequest request) {
         var user = this.identityUserGateway.updateUser(id, request.toCommand());
-        this.identityEventPublisher.publish(
-                "identity.user.updated",
-                "user",
-                user.id(),
-                Map.of("username", user.username())
-        );
         return UserResponse.fromIdentityUser(user);
     }
 
     @Override
+    @PublishIdentityEvent(
+            eventType = "identity.user.patched",
+            subjectType = "user"
+    )
     public UserResponse patchUser(String id, PatchUserRequest request) {
         var user = this.identityUserGateway.patchUser(id, request.toCommand());
-        this.identityEventPublisher.publish(
-                "identity.user.patched",
-                "user",
-                user.id(),
-                Map.of("username", user.username())
-        );
         return UserResponse.fromIdentityUser(user);
     }
 
     @Override
-    public void deleteUser(String id) {
+    @PublishIdentityEvent(
+            eventType = "identity.user.deleted",
+            subjectType = "user"
+    )
+    public DeletedSubjectPayload deleteUser(String id) {
         this.identityUserGateway.deleteUser(id);
-        this.identityEventPublisher.publish("identity.user.deleted", "user", id, Map.of());
+        return new DeletedSubjectPayload(id);
     }
 
     @Override

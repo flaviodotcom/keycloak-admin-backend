@@ -11,6 +11,7 @@ import io.github.flaviodotcom.dto.user.UpdateUserRequest;
 import io.github.flaviodotcom.dto.user.UserResponse;
 import io.github.flaviodotcom.dto.user.UserResponseOptions;
 import io.github.flaviodotcom.dto.user.UserSessionResponse;
+import io.github.flaviodotcom.infrastructure.interception.contracts.DeletedSubjectPayload;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public interface UserService {
 
     UserResponse patchUser(String id, PatchUserRequest request);
 
-    void deleteUser(String id);
+    DeletedSubjectPayload deleteUser(String id);
 
     void sendUpdatePasswordEmail(String id);
 
