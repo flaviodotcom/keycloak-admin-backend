@@ -2,6 +2,7 @@ package io.github.flaviodotcom.resources;
 
 import io.github.flaviodotcom.dto.role.CreateRoleRequest;
 import io.github.flaviodotcom.dto.role.UpdateRoleRequest;
+import io.github.flaviodotcom.infrastructure.interception.identityevent.RequireActorHeader;
 import io.github.flaviodotcom.resources.query.RoleQueryCriteriaMapper;
 import io.github.flaviodotcom.service.RoleService;
 import jakarta.validation.Valid;
@@ -41,6 +42,7 @@ public class RoleResource {
     }
 
     @POST
+    @RequireActorHeader
     @Operation(summary = "Create a role")
     public Response createRole(@Valid CreateRoleRequest request, @Context UriInfo uriInfo) {
         var createdRole = this.roleService.createRole(request);
@@ -50,6 +52,7 @@ public class RoleResource {
 
     @PUT
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Update a role")
     public Response updateRole(@PathParam("id") String id, @Valid UpdateRoleRequest request) {
         return Response.ok(this.roleService.updateRole(id, request)).build();
@@ -57,9 +60,10 @@ public class RoleResource {
 
     @DELETE
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Delete a role")
     public Response deleteRole(@PathParam("id") String id) {
-        this.roleService.deleteRole(id);
+        final var ignored = this.roleService.deleteRole(id);
         return Response.noContent().build();
     }
 }

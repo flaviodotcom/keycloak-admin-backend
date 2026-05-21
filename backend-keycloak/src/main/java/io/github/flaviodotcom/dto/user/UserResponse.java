@@ -2,6 +2,7 @@ package io.github.flaviodotcom.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.github.flaviodotcom.domain.identity.model.IdentityUser;
+import io.github.flaviodotcom.infrastructure.interception.contracts.ActionPayload;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ public record UserResponse(
         Map<String, List<String>> attributes,
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         List<UserGroupResponse> groups
-) {
+) implements ActionPayload {
 
     public UserResponse {
         attributes = attributes == null ? Map.of() : attributes;
@@ -41,6 +42,19 @@ public record UserResponse(
                 identityUser.createdTimestamp(),
                 identityUser.attributes(),
                 groups
+        );
+    }
+
+    @Override
+    public String actionSubjectId() {
+        return this.id;
+    }
+
+    @Override
+    public Map<String, Object> actionMetadata() {
+        return Map.of(
+                "username",
+                this.username
         );
     }
 }

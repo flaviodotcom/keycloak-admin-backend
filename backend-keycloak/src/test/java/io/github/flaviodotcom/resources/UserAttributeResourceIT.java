@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityUserAttributeGateway;
 import io.github.flaviodotcom.domain.identity.model.IdentityUserAttribute;
 import io.quarkus.test.InjectMock;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-class UserAttributeResourceIT {
+class UserAttributeResourceIT extends AbstractIntegrationTest {
 
     @InjectMock
     IdentityUserAttributeGateway identityUserAttributeGateway;

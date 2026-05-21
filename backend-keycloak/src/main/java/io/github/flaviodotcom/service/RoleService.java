@@ -6,6 +6,7 @@ import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
 import io.github.flaviodotcom.dto.role.RoleResponse;
 import io.github.flaviodotcom.dto.role.UpdateRoleRequest;
+import io.github.flaviodotcom.infrastructure.interception.contracts.DeletedSubjectPayload;
 
 public interface RoleService {
 
@@ -17,5 +18,5 @@ public interface RoleService {
 
     RoleResponse updateRole(String id, UpdateRoleRequest request);
 
-    void deleteRole(String id);
+    DeletedSubjectPayload deleteRole(String id);
 }

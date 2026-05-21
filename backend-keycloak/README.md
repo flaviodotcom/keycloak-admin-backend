@@ -67,6 +67,11 @@ infrastructure/keycloak/cache
                            Keycloak lookup caches
 infrastructure/keycloak/resilience
                            Timeout, circuit breaker and bulkhead execution boundary
+infrastructure/interception/contracts
+                           Shared interception payload contracts
+infrastructure/interception/identityevent
+                           CDI interceptors, interceptor bindings and
+                           request filters for identity event publishing
 infrastructure/messaging/  Event publishing infrastructure, Kafka adapters,
                            CDI producers and noop fallbacks
 dto/                       Public request and response DTOs grouped by context
@@ -90,6 +95,12 @@ small common reader.
 Keycloak support code is split into focused subpackages. User Profile attribute
 metadata and indexing live in `infrastructure/keycloak/userprofile`, while
 Keycloak paging defaults live in `infrastructure/keycloak/pagination`.
+
+Identity event publishing concerns are isolated under
+infrastructure/interception. CDI interceptors are responsible for publishing
+events after successful application operations without coupling the service
+layer to Kafka-specific implementations. Shared payload contracts used by the
+interceptors live in infrastructure/interception/contracts.
 
 ## Requirements
 

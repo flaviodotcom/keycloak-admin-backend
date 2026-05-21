@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
@@ -8,7 +9,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
-class OpenApiResourceIT {
+class OpenApiResourceIT extends AbstractIntegrationTest {
 
     @Test
     void givenUnknownRoute_WhenGetRoot_ThenReturnNotFoundWithCorrelationId() {

@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.resources;
 
+import io.github.flaviodotcom.infrastructure.interception.identityevent.RequireActorHeader;
 import io.github.flaviodotcom.dto.user.CreateUserRequest;
 import io.github.flaviodotcom.dto.user.PatchUserRequest;
 import io.github.flaviodotcom.dto.user.RequiredActionsRequest;
@@ -46,6 +47,7 @@ public class UserResource {
     }
 
     @POST
+    @RequireActorHeader
     @Operation(summary = "Create a user")
     public Response createUser(@Valid CreateUserRequest request, @Context UriInfo uriInfo) {
         var createdUser = this.userService.createUser(request);
@@ -55,6 +57,7 @@ public class UserResource {
 
     @PUT
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Update a user")
     public Response updateUser(@PathParam("id") String id, @Valid UpdateUserRequest request) {
         return Response.ok(this.userService.updateUser(id, request)).build();
@@ -62,6 +65,7 @@ public class UserResource {
 
     @PATCH
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Partially update a user")
     public Response patchUser(@PathParam("id") String id, @Valid PatchUserRequest request) {
         return Response.ok(this.userService.patchUser(id, request)).build();
@@ -69,9 +73,10 @@ public class UserResource {
 
     @DELETE
     @Path("{id}")
+    @RequireActorHeader
     @Operation(summary = "Delete a user")
     public Response deleteUser(@PathParam("id") String id) {
-        this.userService.deleteUser(id);
+        final var ignored = this.userService.deleteUser(id);
         return Response.noContent().build();
     }
 

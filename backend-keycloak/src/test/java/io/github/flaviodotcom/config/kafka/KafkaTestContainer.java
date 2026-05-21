@@ -12,7 +12,11 @@ public class KafkaTestContainer implements QuarkusTestResourceLifecycleManager {
 
     @Override
     public Map<String, String> start() {
-        this.kafka = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"));
+        this.kafka = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"))
+                .withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true")
+                .withEnv("KAFKA_NUM_PARTITIONS", "1")
+                .withEnv("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "1");
+
         this.kafka.start();
 
         return Map.of(

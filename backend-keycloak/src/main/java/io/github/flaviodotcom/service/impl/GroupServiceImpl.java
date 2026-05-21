@@ -4,19 +4,18 @@ import io.github.flaviodotcom.domain.identity.criteria.GroupSearchCriteria;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityGroupGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityMembershipGateway;
 import io.github.flaviodotcom.domain.identity.gateway.IdentityRoleAssignmentGateway;
+import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
 import io.github.flaviodotcom.dto.group.CreateGroupRequest;
 import io.github.flaviodotcom.dto.group.GroupResponse;
+import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
 import io.github.flaviodotcom.dto.pagination.PageRequest;
 import io.github.flaviodotcom.dto.pagination.PageResponse;
-import io.github.flaviodotcom.dto.group.UpdateGroupRequest;
 import io.github.flaviodotcom.dto.user.UserResponse;
+import io.github.flaviodotcom.infrastructure.interception.contracts.DeletedSubjectPayload;
+import io.github.flaviodotcom.infrastructure.interception.identityevent.PublishIdentityEvent;
 import io.github.flaviodotcom.service.GroupService;
-import io.github.flaviodotcom.domain.identity.pagination.IdentitySortComparators;
-import io.github.flaviodotcom.service.events.IdentityEventPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.AllArgsConstructor;
-
-import java.util.Map;
 
 @ApplicationScoped
 @AllArgsConstructor
@@ -25,7 +24,6 @@ public class GroupServiceImpl implements GroupService {
     private final IdentityGroupGateway identityGroupGateway;
     private final IdentityMembershipGateway identityMembershipGateway;
     private final IdentityRoleAssignmentGateway identityRoleAssignmentGateway;
-    private final IdentityEventPublisher identityEventPublisher;
 
     @Override
     public PageResponse<GroupResponse> findGroups(GroupSearchCriteria criteria, PageRequest pageRequest) {
@@ -51,33 +49,33 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @PublishIdentityEvent(
+            eventType = "identity.group.created",
+            subjectType = "group"
+    )
     public GroupResponse createGroup(CreateGroupRequest request) {
         var group = this.identityGroupGateway.createGroup(request.toCommand());
-        this.identityEventPublisher.publish(
-                "identity.group.created",
-                "group",
-                group.id(),
-                Map.of("name", group.name())
-        );
         return GroupResponse.fromIdentityGroup(group);
     }
 
     @Override
+    @PublishIdentityEvent(
+            eventType = "identity.group.updated",
+            subjectType = "group"
+    )
     public GroupResponse updateGroup(String id, UpdateGroupRequest request) {
         var group = this.identityGroupGateway.updateGroup(id, request.toCommand());
-        this.identityEventPublisher.publish(
-                "identity.group.updated",
-                "group",
-                group.id(),
-                Map.of("name", group.name())
-        );
         return GroupResponse.fromIdentityGroup(group);
     }
 
     @Override
-    public void deleteGroup(String id) {
+    @PublishIdentityEvent(
+            eventType = "identity.group.deleted",
+            subjectType = "group"
+    )
+    public DeletedSubjectPayload deleteGroup(String id) {
         this.identityGroupGateway.deleteGroup(id);
-        this.identityEventPublisher.publish("identity.group.deleted", "group", id, Map.of());
+        return new DeletedSubjectPayload(id);
     }
 
     @Override
