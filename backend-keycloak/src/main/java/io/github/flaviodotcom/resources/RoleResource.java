@@ -63,7 +63,7 @@ public class RoleResource {
     @RequireActorHeader
     @Operation(summary = "Delete a role")
     public Response deleteRole(@PathParam("id") String id) {
-        this.roleService.deleteRole(id);
+        final var ignored = this.roleService.deleteRole(id);
         return Response.noContent().build();
     }
 }

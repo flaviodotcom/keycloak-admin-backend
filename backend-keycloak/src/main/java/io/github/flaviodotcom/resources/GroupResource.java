@@ -73,7 +73,7 @@ public class GroupResource {
     @RequireActorHeader
     @Operation(summary = "Delete a group")
     public Response deleteGroup(@PathParam("id") String id) {
-        this.groupService.deleteGroup(id);
+        final var ignored = this.groupService.deleteGroup(id);
         return Response.noContent().build();
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.flaviodotcom.config.AbstractIntegrationTest;
 import io.github.flaviodotcom.config.WithKeycloakAndKafkaTestContainerProfile;
+import io.github.flaviodotcom.dto.user.CreateUserRequest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -40,12 +41,15 @@ class IdentityEventKafkaIT extends AbstractIntegrationTest {
             consumer.subscribe(List.of("identity.events"));
             consumer.poll(Duration.ofSeconds(2));
 
-            var body = Map.of(
-                    "username", username,
-                    "email", username + "@example.com",
-                    "firstName", "Kafka",
-                    "lastName", "User",
-                    "enabled", true
+            var body = new CreateUserRequest(
+                    username,
+                    username + "@example.com",
+                    "Kafka",
+                    "User",
+                    true,
+                    true,
+                    Map.of(),
+                    List.of()
             );
 
             given()

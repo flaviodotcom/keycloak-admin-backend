@@ -76,7 +76,7 @@ public class UserResource {
     @RequireActorHeader
     @Operation(summary = "Delete a user")
     public Response deleteUser(@PathParam("id") String id) {
-        this.userService.deleteUser(id);
+        final var ignored = this.userService.deleteUser(id);
         return Response.noContent().build();
     }
 
