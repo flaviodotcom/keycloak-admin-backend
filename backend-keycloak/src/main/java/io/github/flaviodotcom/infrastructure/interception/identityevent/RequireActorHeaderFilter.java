@@ -1,9 +1,10 @@
 package io.github.flaviodotcom.infrastructure.interception.identityevent;
 
+import io.github.flaviodotcom.exceptions.LocalizedBadRequestException;
+import io.github.flaviodotcom.i18n.Messages;
 import io.github.flaviodotcom.service.events.RequestActorResolver;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Priority;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -24,12 +25,15 @@ public class RequireActorHeaderFilter implements ContainerRequestFilter {
             return;
         }
 
-        var actorId = requestContext.getHeaderString(RequestActorResolver.ACTOR_HEADER);
+        var actorHeader = RequestActorResolver.ACTOR_HEADER;
+        var actorId = requestContext.getHeaderString(actorHeader);
 
         if (actorId == null || actorId.isBlank()) {
-            throw new BadRequestException(
-                    "%s header is required when identity events are enabled."
-                            .formatted(RequestActorResolver.ACTOR_HEADER)
+            var messageKey = "error.request-actor-header.required";
+            throw new LocalizedBadRequestException(
+                    messageKey,
+                    Messages.getDefault(messageKey, actorHeader),
+                    actorHeader
             );
         }
     }
