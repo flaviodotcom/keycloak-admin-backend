@@ -12,7 +12,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./config/keycloak/user-management-realm.json:/opt/keycloak/data/import/user-management-realm.json:ro
+      - ./config/keycloak:/opt/keycloak/data/import:ro,Z
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
       interval: 30s
