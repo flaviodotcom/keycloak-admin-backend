@@ -1,5 +1,6 @@
 package io.github.flaviodotcom.audit.service.impl;
 
+import io.github.flaviodotcom.audit.dto.AuditEventFilter;
 import io.github.flaviodotcom.audit.dto.AuditEventResponse;
 import io.github.flaviodotcom.audit.dto.pagination.PageRequest;
 import io.github.flaviodotcom.audit.dto.pagination.PageResponse;
@@ -25,7 +26,7 @@ public class AuditEventServiceImpl implements AuditEventService {
     private final AuditEventMapper eventMapper;
 
     @Override
-    public PageResponse<AuditEventResponse> findEvents(PageRequest pageRequest) {
+    public PageResponse<AuditEventResponse> findEvents(AuditEventFilter filter, PageRequest pageRequest) {
         var sort = Sort.by(
                 pageRequest.sortBy(),
                 pageRequest.sort() == SortDirection.ASC
@@ -34,7 +35,7 @@ public class AuditEventServiceImpl implements AuditEventService {
         );
 
         return PageResponse.from(
-                repository.find("from AuditEvent", sort),
+                repository.findByFilter(filter, sort),
                 pageRequest
         ).map(AuditEventResponse::fromEntity);
     }
