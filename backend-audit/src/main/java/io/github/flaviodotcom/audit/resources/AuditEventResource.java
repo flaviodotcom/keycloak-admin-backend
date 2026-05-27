@@ -1,40 +1,33 @@
 package io.github.flaviodotcom.audit.resources;
 
-import io.github.flaviodotcom.audit.dto.AuditEventResponse;
-import io.github.flaviodotcom.audit.repository.AuditEventRepository;
+import io.github.flaviodotcom.audit.resources.query.AuditEventQueryCriteriaMapper;
+import io.github.flaviodotcom.audit.service.AuditEventService;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Path("/v1/audit-events")
 public class AuditEventResource {
 
-    private static final int DEFAULT_LIMIT = 50;
-
-    private final AuditEventRepository repository;
+    private final AuditEventQueryCriteriaMapper queryCriteriaMapper;
+    private final AuditEventService service;
 
     @GET
-    public List<AuditEventResponse> findEvents(@QueryParam("limit") Integer limit) {
-        var resultLimit = limit == null ? DEFAULT_LIMIT : limit;
-        return this.repository.find("order by receivedAt desc")
-                .page(0, resultLimit)
-                .list()
-                .stream()
-                .map(AuditEventResponse::fromEntity)
-                .toList();
+    public Response findEvents(@Context UriInfo uriInfo) {
+        return Response.ok(this.service.findEvents(
+                queryCriteriaMapper.toCriteria(uriInfo),
+                queryCriteriaMapper.toPageRequest(uriInfo)
+        )).build();
     }
 
     @GET
-    @Path("{eventId}")
-    public AuditEventResponse findByEventId(@PathParam("eventId") String eventId) {
-        return this.repository.findByEventId(eventId)
-                .map(AuditEventResponse::fromEntity)
-                .orElseThrow(NotFoundException::new);
+    @Path("/{eventId}")
+    public Response findByEventId(@PathParam("eventId") String eventId) {
+        return Response.ok(this.service.findEventById(eventId)).build();
     }
 }
