@@ -7,7 +7,6 @@ import java.util.ResourceBundle;
 public final class MessageBundleCatalog {
 
     static final String MESSAGES_BUNDLE_NAME = "messages";
-    static final String VALIDATION_MESSAGES_BUNDLE_NAME = "ValidationMessages";
 
     private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
     private static final ResourceBundle.Control NO_JVM_LOCALE_FALLBACK = new ResourceBundle.Control() {
@@ -45,21 +44,16 @@ public final class MessageBundleCatalog {
             return true;
         }
 
-        return hasLocalizedBundle(MESSAGES_BUNDLE_NAME, locale)
-                && hasLocalizedBundle(VALIDATION_MESSAGES_BUNDLE_NAME, locale);
+        return hasLocalizedBundle(locale);
     }
 
     public static ResourceBundle messages(Locale locale) {
         return ResourceBundle.getBundle(MESSAGES_BUNDLE_NAME, supportedOrDefault(locale), NO_JVM_LOCALE_FALLBACK);
     }
 
-    public static ResourceBundle validationMessages(Locale locale) {
-        return ResourceBundle.getBundle(VALIDATION_MESSAGES_BUNDLE_NAME, supportedOrDefault(locale), NO_JVM_LOCALE_FALLBACK);
-    }
-
-    private static boolean hasLocalizedBundle(String bundleName, Locale locale) {
+    private static boolean hasLocalizedBundle(Locale locale) {
         try {
-            var bundle = ResourceBundle.getBundle(bundleName, locale, NO_JVM_LOCALE_FALLBACK);
+            var bundle = ResourceBundle.getBundle(MESSAGES_BUNDLE_NAME, locale, NO_JVM_LOCALE_FALLBACK);
             return !bundle.getLocale().equals(Locale.ROOT);
         } catch (MissingResourceException exception) {
             return false;

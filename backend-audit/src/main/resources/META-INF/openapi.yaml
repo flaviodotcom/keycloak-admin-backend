@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Backend Audit API
-  version: 1.0.0
+  version: 1.0.1
   description: Audit service for identity and notification events consumed from Kafka.
 servers:
   - url: /api
@@ -9,17 +9,99 @@ paths:
   /v1/audit-events:
     get:
       summary: List audit events
+      tags:
+        - Audit Event Resource
       parameters:
-        - name: limit
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by event type
+        - name: correlationId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by correlation id
+        - name: actorId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by actor id
+        - name: subjectType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by subject type
+        - name: subjectId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by subject id
+        - name: topic
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by Kafka topic
+        - name: receivedFrom
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Return events received from this timestamp
+        - name: receivedTo
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Return events received until this timestamp
+        - name: page
           in: query
           required: false
           schema:
             type: integer
-            default: 50
+            minimum: 0
+            default: 0
+          description: Page number
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
             minimum: 1
+            default: 20
+          description: Page size
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort direction
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - receivedAt
+              - eventType
+              - actorId
+              - subjectId
+              - topic
+            default: receivedAt
+          description: Field used for sorting
       responses:
         "200":
-          description: Audit events ordered by newest received date.
+          description: Audit events ordered by selected sorting.
           content:
             application/json:
               schema:
@@ -29,6 +111,8 @@ paths:
   /v1/audit-events/{eventId}:
     get:
       summary: Find an audit event by event id
+      tags:
+        - Audit Event Resource
       parameters:
         - name: eventId
           in: path

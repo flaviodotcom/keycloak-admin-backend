@@ -45,8 +45,7 @@ public class AuditEventQueryCriteriaMapper {
 
         reader.validateSupportedParams(
                 queryParams,
-                AUDIT_PARAMS,
-                false
+                AUDIT_PARAMS
         );
 
         return new AuditEventFilter(

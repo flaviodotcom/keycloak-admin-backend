@@ -14,18 +14,15 @@ import java.util.Set;
 @ApplicationScoped
 public class QueryParameterReader {
 
-    private static final String ATTRIBUTE_PREFIX = "attr.";
     private static final String ASC_SORT = "asc";
     private static final String DESC_SORT = "desc";
 
     public void validateSupportedParams(
             MultivaluedMap<String, String> queryParams,
-            Set<String> allowedParams,
-            boolean allowAttributes
+            Set<String> allowedParams
     ) {
         for (var parameterName : queryParams.keySet()) {
-            var allowed = allowedParams.contains(parameterName)
-                    || allowAttributes && parameterName.startsWith(ATTRIBUTE_PREFIX);
+            var allowed = allowedParams.contains(parameterName);
             if (!allowed) {
                 throw badRequest("error.query-param.unsupported", parameterName);
             }

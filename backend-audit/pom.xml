@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.flaviodotcom</groupId>
     <artifactId>backend-audit</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>quarkus</packaging>
 
     <properties>
@@ -39,10 +39,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
